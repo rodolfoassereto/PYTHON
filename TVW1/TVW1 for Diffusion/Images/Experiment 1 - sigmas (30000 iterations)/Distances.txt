@@ -1,0 +1,24 @@
+>>> # %% ── 8. Summary table ────────────────────────────────────────────────────────
+... print(f"\n{'=' * 70}")
+... print(f"  SUMMARY: sigma sweep  (iterations={iterations})")
+... print(f"{'=' * 70}")
+... print(f"  {'sigma':>8s}  {'sig/d':>8s}  {'final L2 err':>14s}  {'W1 err':>8s}  {'W2 err':>8s}  {'time (s)':>10s}")
+... print(f"  {'-' * 8}  {'-' * 8}  {'-' * 14}  {'-' * 8}  {'-' * 8}  {'-' * 10}")
+... for sigma in sigmas_sorted:
+...     r = results[sigma]
+...     W1_err, _, sums_avg_W1 = voxelwise_wasserstein( r['P_bar'], ground_truth, shape_x, shape_y, order=1 )
+...     W2_err, _, sums_avg_W2 = voxelwise_wasserstein( r['P_bar'], ground_truth, shape_x, shape_y, order=2 )
+...     W1_err, W2_err = W1_err/ np.sum(sums_avg_W1), W2_err/np.sum(sums_avg_W2)
+...     marker = ' <-- best (for L2)' if sigma == best_sigma else ''
+...     print(f"  {sigma:8.2f}  {sigma / d[0]:8.4f}  {r['final_l2']:14.6f}  {W1_err:8.6f}  {W2_err:8.6f}  {r['elapsed']:10.1f}{marker}")
+...     
+
+======================================================================
+  SUMMARY: sigma sweep  (iterations=30000)
+======================================================================
+     sigma     sig/d    final L2 err    W1 err    W2 err    time (s)
+  --------  --------  --------------  --------  --------  ----------
+      0.02    0.0067        0.248610  0.542257  0.068679       647.9 <-- best (for L2)
+      0.10    0.0333        0.273985  0.444673  0.057626       635.2
+      0.30    0.1000        0.312271  0.452778  0.057395       650.9
+      1.00    0.3333        0.354657  0.467427  0.058249       818.4

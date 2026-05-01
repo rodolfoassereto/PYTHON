@@ -1,0 +1,19 @@
+1) TVW1 inpainting
+
+This is an inpainting problem, where we are trying to reconstruct the central voxel (only). The fidelity is the characteristic function on all but the central voxel; the regularization is the (unbalanced and anisotropic) TVW1, i.e. the sum of the (unbalanced) W1 between neighboring voxels.
+Since we are using anisotropic TV, we expect to recover exactly the W1 median of the content from the voxels in (0,1), (1,0), (1,2), (1,1). The result is a centered star, which coincides with the experiments in Enis and Carlier's paper https://arxiv.org/abs/2307.01765 (pag.3).
+
+2) Reconstructing gaussians
+
+This is an (unbalanced) W1-TVW1 reconstruction. The data consists of gaussians oriented vertically, and rotated by a random angle. The TVW1 regularization straightens the gaussians back vertically. A "staircasing effect" on the angles seems to appear.
+
+3) Reconstructing a curve
+
+This is another (unbalanced) W1-TVW1 reconstruction with 1D domain, i.e. a curve in the space of measures.
+The "reconstruction with TVW" image shows the given data on the left, and the effect of the (unbalanced) W1-TVW1 reconstruction with increasing regularization parameter. Mass gets transported and a regularization on the position appears.
+The "reconstruction with TVL1" does the same, but for a W1-TVL1 reconstruction. Mass gets split.
+The "reconstruction with L1-TVL1" does the same, but for an L1-TVL1 reconstruction. Mass gets teleported.
+
+
+
+Remark: we are always using an unbalanced Wasserstein (the Hanin norm or Piccoli-Rossi distance, which are the same) allowing for mass creation or destruction.

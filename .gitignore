@@ -1,0 +1,16 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.ipynb_checkpoints/
+
+# Spyder
+.spyproject/
+
+# Positron / VS Code
+.vscode/
+
+# Data files you don't want on GitHub (optional)
+*.nii
+*.nii.gz
+*.mat
