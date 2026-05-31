@@ -68,16 +68,22 @@ cell-by-cell, or as a whole file.
 
 ## Experiments
 
-| Experiment | What it shows | Reproducible? |
-|---|---|---|
-| `diffusion/00_compare_models` | CP vs graph-DR on the gaussian-mixture toy | ✅ seeded |
-| `diffusion/01_sweep_sigma` | graph-DR step-size σ sensitivity | ✅ seeded — set `iterations=30000`, `sigma_values=[0.02,0.1,0.3,1]` to reproduce `results/` |
-| `diffusion/02_graph_topology` | base-graph algebraic-connectivity (λ₁) study | ✅ seeded — `RUN_ALL=True` for the all-38 figure |
-| `behavior/angle_regularization` | W1-TV on noisy-angle gaussians ≈ TV on the angle | ✅ seeded |
-| `behavior/w1_naif_properties` | properties of the naif unbalanced W1 (Dirac / mass creation) | ✅ deterministic (needs POT) |
-| `behavior/odf_crossing_fibres` | crossing-fibre ODF from undersampled q-space | ✅ self-contained, seeded (needs scikit-image) |
-| `behavior/reconstruct_4d` | W1-TV on bars/rings/mixtures/images (incl. W1-TV ≈ standard TV) | ✅ seed added (was unseeded) |
-| `behavior/curve_reconstruction` | curve / video-inpainting **data** | ⚠️ data only — original recon/gif pipeline is in `archive/traffic_video/legacy_experiments.py` |
+Folder-name convention: `<purpose>__<model>__<algorithm>`. The algorithm tag is
+`CP` (Chambolle–Pock), `graph_DR` (graph Douglas–Rachford), or both — present only
+when an iterative TV-W1 solver is used. The three folders with no model/algorithm
+tag (`w1_naif_properties`, `odf_crossing_fibres`, `curve_reconstruction`) use no
+such solver.
+
+| Experiment (folder) | Model | Algorithm | What it shows | Reproducible? |
+|---|---|---|---|---|
+| `diffusion/00_compare_models__L2-TVW1-naif__CP+graph_DR` | L2-TVW1 naif | CP + graph_DR | CP vs graph-DR on the gaussian-mixture toy | ✅ seeded |
+| `diffusion/01_sweep_sigma__L2-TVW1-naif__graph_DR` | L2-TVW1 naif | graph_DR | graph-DR step-size σ sensitivity | ✅ seeded — set `iterations=30000`, `sigma_values=[0.02,0.1,0.3,1]` to reproduce `results/` |
+| `diffusion/02_graph_topology__L2-TVW1-naif__graph_DR` | L2-TVW1 naif | graph_DR | base-graph algebraic-connectivity (λ₁) study | ✅ seeded — `RUN_ALL=True` for the all-38 figure |
+| `behavior/angle_regularization__L2-TVPR__CP` | L2-TVPR (Dirichlet) | CP | W1-TV on noisy-angle gaussians ≈ TV on the angle | ✅ seeded |
+| `behavior/reconstruct_4d__W1-TVW1__CP` | W1-TVW1 | CP | W1-TV on bars/rings/mixtures/images (incl. W1-TV ≈ standard TV) | ✅ seed added (was unseeded) |
+| `behavior/w1_naif_properties` | W1-naif (distance) | — (direct OT) | properties of the naif unbalanced W1 (Dirac / mass creation) | ✅ deterministic (needs POT) |
+| `behavior/odf_crossing_fibres` | — (zero-filled IFFT) | — | crossing-fibre ODF from undersampled q-space | ✅ self-contained, seeded (needs scikit-image) |
+| `behavior/curve_reconstruction` | — (data only) | — | curve / video-inpainting **data** | ⚠️ data only — recon/gif pipeline in `archive/traffic_video/legacy_experiments.py` |
 
 Each reproducible experiment keeps its reference figures in its own `results/`.
 Re-running a script writes fresh figures next to it.
