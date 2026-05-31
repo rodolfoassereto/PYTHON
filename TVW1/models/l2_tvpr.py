@@ -30,8 +30,8 @@ def L2_TVPR(b, alpha1, eps, beta1 = None, forward='UF', maxit=10000, printprogre
         K, Kstar = [ lambda x: x.flatten(), lambda x: x.reshape(b.shape) ]
         
     prox_f     = lambda X, tau: { 'u':   np.real(X['u']),
-                                  'xi':  prox_norm21(X['xi'], lam=alpha1*tau) ,
-                                  'gam': prox_norm21(X['gam'], lam=eps*tau) }
+                                  'xi':  prox_norm21(X['xi'], lam=alpha1*tau, ax=0) ,
+                                  'gam': prox_norm21(X['gam'], lam=eps*tau, ax=0) }
     prox_gstar = lambda Y, sig: { 'lam': ( Y['lam'] - sig*b ) / (1 + sig) ,
                                   'w':   proj_L_infty_ball(Y['w'], lam=beta1) ,
                                   'eta': Y['eta'] }
@@ -82,7 +82,7 @@ def L2_TVPR_Dirichlet(b, alpha1, eps, beta1 = None, forward='UF', algorithm='CP'
         K, Kstar = [ lambda x: x.flatten(), lambda x: x.reshape(b.shape) ]
         
     prox_f     = lambda X, tau: { 'u':   np.real(X['u']),
-                                  'xi':  prox_norm21(X['xi'], lam=alpha1*tau, ax=1) }
+                                  'xi':  prox_norm21(X['xi'], lam=alpha1*tau, ax=0) }
     prox_gstar = lambda Y, sig: { 'lam': ( Y['lam'] - sig*b ) / (1 + sig) ,
                                   'w':   proj_L_infty_ball(Y['w'], lam=beta1) ,
                                   'eta': Y['eta'] / (1+sig*eps) }
