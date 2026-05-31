@@ -14,3 +14,5 @@ __pycache__/
 *.nii
 *.nii.gz
 *.mat
+# OS / Drive sync artifacts
+desktop.ini
