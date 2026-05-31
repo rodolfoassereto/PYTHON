@@ -179,7 +179,12 @@ def L2(b, maxit=4000, printprogress=True): # funziona!
 def TVPR( u, alpha1, tau, beta1=None , maxit=2000, printprogress=False ):
     '''
     
-    CORREGGERE prox_norm21
+    Evaluate the TV-PR (Piccoli-Rossi) regularizer of a field u, via CP on its
+    dual. Returns (s1, s2): s1 = ||xi||_{2,1} (the regularizer value, 2-norm
+    grouped along the displacement-gradient axis 0); s2 = <nabla_x(u/alpha1) +
+    div_y(xi), w>, a duality check that should match s1 at convergence.
+    prox_norm21 below now passes ax=0 (it was omitted, relying on a removed
+    default of 1) to match s1 and the canonical naif model.
     
     '''
     from prox_and_proj import prox_norm21, proj_L_infty_ball
@@ -194,7 +199,7 @@ def TVPR( u, alpha1, tau, beta1=None , maxit=2000, printprogress=False ):
     # sig, tau = 2 * [1 / np.sqrt(L_norm_sq)] # this is to have sig = tau
     if beta1 in {None}: beta1 = alpha1 * np.max(u.shape[dim_x+1:])
     
-    prox_f     = lambda X, tau: { 'xi':  prox_norm21(X['xi'], lam=tau) }
+    prox_f     = lambda X, tau: { 'xi':  prox_norm21(X['xi'], lam=tau, ax=0) }
     prox_gstar = lambda Y, sig: { 'w':   proj_L_infty_ball(Y['w'] + sig/alpha1 * nabla_x(u, dim=dim_x), lam=beta1) }
     L     = lambda X: { 'w':   div_y(X['xi']) }
     Lstar = lambda Y: { 'xi':  -nabla_y(Y['w'], dim=dim_y) }
