@@ -187,7 +187,7 @@ from import_data import import_image
 target_shape = (128,128)
 max_value = 7
 
-image = import_image(str(Path(paths.__file__).resolve().parent / "experiments/behavior/reconstruct_4d/image.jpg"), target_shape=target_shape)
+image = import_image(str(next(Path(paths.__file__).resolve().parent.glob("experiments/behavior/*/image.jpg"))), target_shape=target_shape)
 
 sigma = 0.1
 image_noisy = image +  sigma * np.random.normal(size=target_shape)
