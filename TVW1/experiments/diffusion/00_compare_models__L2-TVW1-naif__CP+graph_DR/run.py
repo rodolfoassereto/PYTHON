@@ -57,7 +57,7 @@ from graphs import make_graph_DR_parameters
 
 if __name__ == '__main__':
     alpha1, alpha2 = 0.45, 1.4
-    iterations = 4000
+    iterations = 400
     sigma = 1
     N = 4
     graph_DR_parameters = make_graph_DR_parameters(N, [(0, 1), (1, 2), (2, 3)])

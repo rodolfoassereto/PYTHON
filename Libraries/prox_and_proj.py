@@ -138,7 +138,7 @@ def make_prox_box(l, u):
 
 ###### PROJECTIONS ######
 
-def proj_infty_ball(x, lam=1): # lam is the "radius" of the L infinity ball
+def proj_L_infty_ball(x, lam=1): # lam is the "radius" of the L infinity ball
     return np.minimum(np.abs(x), lam) * np.sign(x)
 
 def proj_ball_L2(x, lam=1): # lam is the radius of the ball

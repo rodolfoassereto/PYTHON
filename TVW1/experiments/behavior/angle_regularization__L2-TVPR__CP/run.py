@@ -7,7 +7,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from gaussians import gaussian_function_as_matrix, rotate_2d_array
 from plottings import plot_u
-from l2_tvpr import L2_TVPR, L2_TVPR_Dirichlet
+from l2_tvpr import L2_TVPR_Dirichlet
 np.random.seed(0)
 
 ''' I build and plot gaussians at 4 different angles'''
@@ -15,7 +15,10 @@ np.random.seed(0)
 I print both the angles and the tweaked gaussians'''
 
 M, N = 10, 30
-gaussians = np.zeros((M,M,N,N))
+shape_x, shape_y = (M,M), (N,N)
+shape_xy = shape_x + shape_y
+ndim_x, ndim_y = len(shape_x), len(shape_y)
+gaussians = np.zeros(shape_xy)
 gaussians_noisy = gaussians.copy()
 thetas = np.zeros((M,M))
 thetas[:5,:5], thetas[:5,5:], thetas[5:,5:] = np.pi/4, -np.pi/4, np.pi/2
@@ -23,7 +26,8 @@ thetas_noisy = np.zeros((M,M))
 cov = np.array([[8,0],[0,1]])
 coord = np.linspace(-5,5,N)
 
-plt.imshow(thetas, cmap='gray'); plt.show()
+plt.imshow(thetas, cmap='gray')
+plt.show()
 
 for i in range(M):
     for j in range(M):
@@ -33,14 +37,15 @@ for i in range(M):
         cov_temp_noisy = rotate_2d_array(cov, thetas_noisy[i,j])
         gaussians_noisy[i,j] = gaussian_function_as_matrix(coord,coord, cov=cov_temp_noisy)
 
-plot_u(gaussians)
-plot_u(gaussians_noisy)
-plt.imshow(thetas_noisy, cmap='gray'); plt.show()
+plot_u(gaussians, ndim_y)
+plot_u(gaussians_noisy, ndim_y)
+plt.imshow(thetas_noisy, cmap='gray')
+plt.show()
 
 '''I reconstruct and plot the gaussians using L2_TVPR'''
 
 gaussians_star, _ = L2_TVPR_Dirichlet(gaussians_noisy, 0.0015, 0.06, forward=False, maxit=1000) # a suitable value for eps is 0.01
-plot_u(gaussians_star)
+plot_u(gaussians_star, ndim_y)
 
 def compute_gaussian_covariance(grid, Z): # given a meshgrid of shape (M,M,2) (resulting from my_meshgrid), it returns the covariance matrix of a 2-d distribution Z
     """
