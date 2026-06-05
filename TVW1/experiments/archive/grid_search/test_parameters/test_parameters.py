@@ -48,31 +48,31 @@ u_3 = u_3[:,:,int(N_3/2)]
 
 ########### 2. ASSESSING REFERENCE VALUES FOR UNDERSAMPLING AND NOISE
 '''
-To build the measured data 'b', we import the forward operator UF (and its adjoint UFstar), which
+To build the measured data 'b', we import the forward operator KK (and its adjoint KKstar), which
 performs an undersampled Fourier transform.
 The involved parameters for the construction of b are:
     keptval:    percentage of sampled values in the Fourier space
-    noiselevel: percentage of noise w.r.t. np.max( np.abs( UF(u) ) )
+    noiselevel: percentage of noise w.r.t. np.max( np.abs( KK(u) ) )
 '''
 
-from build_toymodels import undersampling_mask_small, UF, UFstar
+from build_toymodels import undersampling_mask_small, KK, KKstar
 
 def build_b(data, keptval, noiselevel):
     np.random.seed(0)
     mask = np.zeros(data.shape, dtype=bool)
     mask[:,:] = undersampling_mask_small(data.shape[-2:], ratio=keptval)
     mask = np.invert( np.fft.ifftshift(mask) )
-    b_clean = UF(data, mask=mask)
+    b_clean = KK(data, mask=mask)
     b = b_clean + np.random.normal(size=data.shape, scale=noiselevel * np.max(np.abs(b_clean)))
     return b, b_clean
 
 ########### 2.1) build b from gammas with suitable parameters
 
 keptval_1 = 0.15
-noiselevel_1 = 0.02 # 2% of np.max( np.abs( UF(u) ) )
+noiselevel_1 = 0.02 # 2% of np.max( np.abs( KK(u) ) )
 
 b_1, b_1_clean = build_b(u_1, keptval_1, noiselevel_1)
-u_1_rough = np.real( UFstar( b_1 ) ) # this is a rough reconstruction, only involving the adjoint operator
+u_1_rough = np.real( KKstar( b_1 ) ) # this is a rough reconstruction, only involving the adjoint operator
 # plot_u(u_1_rough)
 
 ########### 2.2) build b from gaussians with suitable parameters
@@ -81,7 +81,7 @@ keptval_2 = 0.155
 noiselevel_2 = 0.0075
 
 b_2, b_2_clean  = build_b(u_2, keptval_2, noiselevel_2)
-u_2_rough = np.real( UFstar( b_2 ) )
+u_2_rough = np.real( KKstar( b_2 ) )
 
 plot_u(u_2_rough, ndim_y)
 
@@ -91,7 +91,7 @@ keptval_3 = 0.2
 noiselevel_3 = 0.01
 
 b_3, b_3_clean = build_b(u_3, keptval_3, noiselevel_3)
-u_3_rough = np.real( UFstar( b_3 ) )
+u_3_rough = np.real( KKstar( b_3 ) )
 # plot_u(u_rough)
 
 
@@ -103,7 +103,7 @@ We'll be testing the reconstructions with the model L2_TVPR, with parameters:
     eps:    intensity of the smoothness regularizer (TV_y) (imposes smoothness in each voxel)
     maxit:  number of iterations
 The signature of the function is:
-    def L2_TVPR(b, alpha1, eps, beta1 = None, forward='UF', maxit=10000):
+    def L2_TVPR(b, alpha1, eps, beta1 = None, forward='KK', maxit=10000):
         ...
         return u, w
     where u is the reconstructed variable.
@@ -204,10 +204,10 @@ def gridsearch(u_deg=u_deg, keptvalues=keptvalues, noiselevels=noiselevels, alph
         
         for i1, noiselevel in enumerate(noiselevels):
             
-            b_clean = UF(u_deg, mask=mask)
+            b_clean = KK(u_deg, mask=mask)
             b = b_clean + np.random.normal(size=u_deg.shape, scale=noiselevel * np.max(np.abs(b_clean)))
             
-            u_rough = np.abs( UFstar(b) )
+            u_rough = np.abs( KKstar(b) )
             # plot_u(u_rough)
             dist_W1_rough[ (kept_val, noiselevel) ] = wass1_4d( u_rough, u_deg, M=M)
             dist_W2_rough[ (kept_val, noiselevel) ] = wass2_4d( u_rough, u_deg )
@@ -261,10 +261,10 @@ to compile fast '''
 # mask[:,:] = undersampling_mask_small(u_deg.shape[-2:], ratio=kept)
 # mask = np.invert( np.fft.ifftshift(mask) )
 
-# b_clean = UF(u_deg, mask=mask)
+# b_clean = KK(u_deg, mask=mask)
 # b = b_clean + np.random.normal(size=u_deg.shape, scale=noise * np.max(np.abs(b_clean)))
 
-# plot_u( np.real( UFstar(b) ) )
+# plot_u( np.real( KKstar(b) ) )
 
 # u_star, _ = L2_TVPR(b, alpha1=alpha, eps=eps, maxit=7500, printprogress=True)
 

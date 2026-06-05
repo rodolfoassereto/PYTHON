@@ -5,11 +5,8 @@ Two flavours, the single home for both:
   KK_factory / KKstar_factory : undersampled *real* FFT selected by a boolean
       mask `mask_rfft` over rfftn frequencies.  Used by the L2-TVW1 naif model.
 
-  UF / UFstar : masked *full* FFT (numpy masked array).  Legacy forward operator
+  KK / KKstar : masked *full* FFT (numpy masked array).  Legacy forward operator
       used by the L2-TVPR family.
-
-(Previously KK lived inside L2_TVW1_naif__model.py and UF inside build_toymodels.py;
-experiments used to import the forward operator from a model file.)
 """
 import numpy as np
 
@@ -31,9 +28,9 @@ def KKstar_factory(mask_rfft):
 
 
 # ---- Masked full FFT (legacy, L2-TVPR family) ----
-def UF(x, mask=None):
-    return np.ma.masked_array(np.fft.fftn(x, norm='ortho'), mask=mask)
+def KK(P, mask=None):
+    return np.ma.masked_array(np.fft.fftn(P, norm='ortho'), mask=mask)
 
 
-def UFstar(y):
-    return np.fft.ifftn(np.ma.filled(y, fill_value=0), norm='ortho')
+def KKstar(E):
+    return np.fft.ifftn(np.ma.filled(E, fill_value=0), norm='ortho')

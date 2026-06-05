@@ -21,9 +21,8 @@ N_gaussians = 30
 M_gaussians = 5
 
 
-# =====================================================================
-# (1) Canonical crossing-fibre gaussian mixture (deterministic)
-# =====================================================================
+# %% (1) Canonical crossing-fibre gaussian mixture (deterministic)
+
 def function_as_array(coordinates, f):
     mesh = np.meshgrid(*coordinates, indexing='ij')
     return np.vectorize(f)(*mesh)
@@ -75,6 +74,25 @@ def generate_field_2d(shape_x, a, b, c=0):
     return A.reshape(A.shape + (1,))
 
 
+def plot_flow_fields(*arrays):
+    """Quiver visualisation of one or more angle fields."""
+    if not arrays:
+        raise ValueError("At least one flow field array is required.")
+    N = arrays[0].shape[0]
+    X, Y = np.meshgrid(np.arange(N), np.arange(N))
+    plt.figure(figsize=(6, 6))
+    colors = ['blue', 'red', 'green', 'purple', 'orange', 'cyan']
+    for i, A in enumerate(arrays):
+        U = np.cos(A)
+        V = np.sin(A)
+        plt.quiver(X, Y, U, V, scale=N, color=colors[i % len(colors)], alpha=0.6)
+    plt.xlim(-0.5, N - 0.5)
+    plt.ylim(-0.5, N - 0.5)
+    plt.gca().set_aspect('equal')
+    plt.title("Multiple Flow Fields Visualization")
+    plt.show()
+
+
 def generate_gaussians_from_eigval_and_field(eigenvalues, field, shape_y):
     ndim_y = len(shape_y)
     number_of_angles = field.shape[-1]
@@ -106,9 +124,8 @@ def build_gaussian_mixture(shape_x, shape_y):
     return g1 + g2
 
 
-# =====================================================================
-# (2) Covariance-based helpers (older demos)
-# =====================================================================
+# %% (2) Covariance-based helpers (older demos; COMMENTED OUT!)
+'''
 def my_meshgrid(*coordinates, normalize=True, indexing='xy'):
     """coord_0..coord_d (or a shape) -> (l1,...,ld,d) grid of coordinate tuples."""
     if len(coordinates) == 1:
@@ -262,3 +279,4 @@ def build_flow_gaussians_crossing(M=11):
     field_1 = generate_field(M, 1, 1, 2)
     field_2 = generate_field(M, 0, 0, -0.75)
     return build_u_gaussians_fromfield(field_1) + build_u_gaussians_fromfield(field_2)
+'''
