@@ -1,7 +1,6 @@
 # paths.py — import this FIRST in any TVW1 script to wire sys.path.
 #
-# It locates the repository from this file's own location (no hardcoded,
-# machine-specific paths) and prepends the project's importable directories.
+# It locates the repository from this file's own location (no machine-specific paths) and prepends the project's importable directories.
 # Replaces every old `sys.path.insert(0, r"C:\Users\...\My Drive\PYHTON\...")`.
 #
 # Usage at the top of a script that lives anywhere under the repo:

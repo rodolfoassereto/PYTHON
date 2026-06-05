@@ -190,21 +190,3 @@ def build_u_stars(M=3, N=51):
     mask[1, 1, :, :] = True
     return u_stars, np.ma.masked_array(u_stars, mask=mask)
 
-
-def plot_flow_fields(*arrays):
-    """Quiver visualisation of one or more angle fields."""
-    if not arrays:
-        raise ValueError("At least one flow field array is required.")
-    N = arrays[0].shape[0]
-    X, Y = np.meshgrid(np.arange(N), np.arange(N))
-    plt.figure(figsize=(6, 6))
-    colors = ['blue', 'red', 'green', 'purple', 'orange', 'cyan']
-    for i, A in enumerate(arrays):
-        U = np.cos(A)
-        V = np.sin(A)
-        plt.quiver(X, Y, U, V, scale=N, color=colors[i % len(colors)], alpha=0.6)
-    plt.xlim(-0.5, N - 0.5)
-    plt.ylim(-0.5, N - 0.5)
-    plt.gca().set_aspect('equal')
-    plt.title("Multiple Flow Fields Visualization")
-    plt.show()

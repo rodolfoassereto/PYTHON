@@ -9,7 +9,7 @@ from gaussians import gaussian_density_factory, function_as_array
 # =====================================================================
 # Canonical q-space variable-density mask (diffusion experiments)
 # =====================================================================
-def undersampling_mask_y(shape_y, retained_ratio, concentration_coeff): # needs to be ifftshifted before being applied
+def undersampling_mask_y(shape_y, retained_ratio, concentration_coeff):
     """Boolean (shape_y) mask: retained_ratio of points, Gaussian-density sampled."""
     assert 0 < concentration_coeff < 1
     ndim_y = len(shape_y)
@@ -27,9 +27,20 @@ def undersampling_mask_y(shape_y, retained_ratio, concentration_coeff): # needs 
     return mask_y
 
 
-def undersampling_mask_xy(shape_x, shape_y, retained_ratio, concentration_coeff):
+def undersampling_mask_xy(shape_x, shape_y, retained_ratio, concentration_coeff): # needs to be ifftshifted before being applied
     """Boolean (shape_x+shape_y) mask, the q-space pattern shared across all voxels."""
     mask_xy = np.zeros(shape_x + shape_y, dtype=bool)
     mask_y = undersampling_mask_y(shape_y, retained_ratio, concentration_coeff)
     mask_xy[:] = mask_y  # NumPy broadcasting
     return mask_xy
+
+'''
+To obtain mask_rfft:
+
+mask_fft = undersampling_mask_xy(shape_x, shape_y, retained_ratio, concentration_coeff)
+mask_temp = np.fft.ifftshift(mask_fft)
+mask_rfft = mask_temp[ ..., : (shape_xy[-1]//2 + 1) ]
+
+or, equivalent:
+mask_rfft_2 = mask_fft[tuple(slice(None) if i != ndim_xy - 1 else slice(0, shape_xy[-1] // 2 + 1) for i in range(ndim_xy))]
+'''
