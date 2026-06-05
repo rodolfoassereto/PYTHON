@@ -18,7 +18,7 @@ TVW1/
 │   ├── operators.py        II, JJ, PP  (per-voxel mass / zero-mean projections)
 │   ├── forward.py          KK (undersampled rFFT) and UF (masked FFT)
 │   ├── metrics.py          voxelwise W1/W2 (POT), W1_naif, build_cost_matrix
-│   └── graphs.py           graph-DR topology: (Z, parent_node, d), λ₁ enumeration
+│   └── graph_DR_auxiliary_functions.py           graph-DR topology: (Z, parent_node, d), λ₁ enumeration
 ├── models/             the variational models (see table below)
 ├── data/               test-data generators (side-effect-free)
 │   ├── gaussians.py        crossing-fibre mixtures (+ covariance helpers)

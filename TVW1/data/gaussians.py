@@ -123,6 +123,14 @@ def build_gaussian_mixture(shape_x, shape_y):
     g2 = generate_gaussians_from_eigval_and_field(eigenvalues, field_2, shape_y)
     return g1 + g2
 
+'''
+How to add noise?
+
+std = np.sqrt(np.sum(np.abs(E_clean) ** 2) / (E_clean.size * SNR))
+noise = np.random.normal(size=E_clean.size, scale=std) + 1j * np.random.normal(size=E_clean.size, scale=std)
+E = E_clean + noise / np.sqrt(2)
+'''
+
 
 # %% (2) Covariance-based helpers (older demos; COMMENTED OUT!)
 '''

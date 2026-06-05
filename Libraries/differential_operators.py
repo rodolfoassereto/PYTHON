@@ -2,6 +2,8 @@
 
 import numpy as np
 
+# %% partialplus, partialminus
+
 def partialplus_old(x, i):
     x = np.moveaxis(x, i, 0)
     y = np.zeros(x.shape, dtype=x.dtype)
@@ -34,7 +36,8 @@ def partialminus(x, i):
 def partialminus_2(x,i):
     return np.diff(x, axis=i, prepend=0)
 
-''' Gradient '''
+
+# %% Gradients, Divergences, Laplacians
 
 def nabla(u, start=0, stop=2, stack_to_axis=0):
     return np.stack( [ partialplus(u, k) for k in range(start,stop) ], axis=stack_to_axis )
@@ -45,8 +48,7 @@ def nabla_x(u, dim): # from (n1...nd,m1,...,mD) and dim=d, returns (d,n1...nd,m1
 def nabla_y(u, dim): # from (n1...nd,m1,...,mD) and dim=D, returns (D,n1...nd,m1,...,mD)
     return np.stack( [partialplus(u, u.ndim-dim+k) for k in range(dim)] )
 
-''' Divergence
-    Note: the divergence is *minus* the adjoint of the gradient'''
+''' Note: the divergence is *minus* the adjoint of the gradient'''
 
 ''' A divergence has two arguments:
      1) The axis to collapse ("axis");
@@ -69,12 +71,27 @@ def div_y(v, axis=0): # computes the divergence (if axis=0, derivatives start fr
 def laplacian_x(v, dim): # checked with its sparse counterpart (which defaults partialplus to 'noboundary'), produces the same output
     return div_x( nabla_x(v, dim) )
 
-''' Here is also a definition of TV for 1 and 2-dimensional arrays'''
+
+# %% TV and Frobenius product
 
 tv_1d = lambda x: np.linalg.norm( partialplus(x, 0), ord=1 )
 tv_2d_iso = lambda x: np.sum( np.linalg.norm( nabla_x(x), axis=0 ) )
 tv_2d_aniso = lambda x: np.sum(np.abs(nabla_x(x)))
 
-''' Frobenius product '''
 def Frobenius(A,B):
     return np.dot(A.flatten(),B.flatten())
+
+
+# %% Central differential operators
+
+def partialcent(x, i):
+    x = np.moveaxis(x, i, 0)
+    y = np.zeros(x.shape, dtype=x.dtype)
+    y[1:-1] = (x[2:] - x[:-2]) / 2
+    return np.moveaxis(y, 0, i)
+
+def partialcent_stag(x, i):
+    x = np.moveaxis(x, i, 0)
+    y = np.zeros(x.shape, dtype=x.dtype)
+    y[1:-1] = (x[2:] - x[:-2]) / 2
+    return np.moveaxis(y, 0, i)

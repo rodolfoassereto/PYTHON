@@ -53,7 +53,7 @@ if __name__ == '__main__':
 
 # %% ── model_naif_graph (graph Douglas-Rachford) ──────────────────────────────
 from l2_tvw1_naif import model_naif_graph
-from graphs import make_graph_DR_parameters
+from graph_DR_auxiliary_functions import make_graph_DR_parameters
 
 if __name__ == '__main__':
     alpha1, alpha2 = 0.45, 1.4

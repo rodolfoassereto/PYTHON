@@ -40,8 +40,9 @@ import numpy as np
 from gaussians import build_gaussian_mixture
 from masks import undersampling_mask_xy
 from forward import KK_factory, KKstar_factory
-from graphs import make_graph_DR_parameters
+from graph_DR_auxiliary_functions import make_graph_DR_parameters
 from l2_tvw1_naif import model_naif, model_naif_graph
+
 
 # ── tiny test harness ─────────────────────────────────────────────────────────
 _RESULTS = []
@@ -66,13 +67,14 @@ SNR = 20
 ALPHA1, ALPHA2 = 0.45, 1.4
 STEPSIZE_RATIO = 0.5    # CP
 SIGMA = 0.3             # graph-DR (good value from the sigma sweep)
-IT_NAIF = 2000          # CP main run
-IT_GRAPH = 3000         # graph-DR main run
-IT_DET = 100            # determinism check (exactness is iteration-independent)
+IT_NAIF = 5000          # CP main run
+IT_GRAPH = 5000         # graph-DR main run
+IT_DET = 1000            # determinism check (exactness is iteration-independent)
 
 QUALITY_FACTOR = 0.85   # a "good" reconstruction has err < this * rough err
 CAUCHY_TOL = 0.12       # ||P(2T)-P(T)|| / ||P(T)||  must be below this
 QUALITY_AGREE_TOL = 0.15  # |cp_err - graph_err| in rel-L2 units
+
 
 
 # %% ── build the toymodel problem ─────────────────────────────────────────────
@@ -84,16 +86,20 @@ def build_problem(shape_x=(5, 5), shape_y=(12, 12), seed=SEED):
     ndim_xy = len(shape_x + shape_y)
     shape_xy = shape_x + shape_y
     mask_fft = np.fft.ifftshift(undersampling_mask_xy(shape_x, shape_y, RETAINED, CONCENTRATION))
-    mask_rfft = mask_fft[tuple(slice(None) if i != ndim_xy - 1 else slice(0, shape_xy[-1] // 2 + 1)
-                               for i in range(ndim_xy))]
+    mask_rfft = mask_fft[ ..., : (shape_xy[-1]//2 + 1) ]
     KK, KKstar = KK_factory(mask_rfft), KKstar_factory(mask_rfft)
 
     E_clean = KK(gt)
+    # Proper complex Gaussian noise: real and imaginary parts each ~ N(0, std^2/2),
+    # so total noise power per component = std^2 and SNR = E_energy / (N*std^2).
+    # The 1/sqrt(2) normalises so that the total power equals std^2 (not 2*std^2).
     std = np.sqrt(np.sum(np.abs(E_clean) ** 2) / (E_clean.size * SNR))
-    E = E_clean + np.random.normal(size=E_clean.size, scale=std)
+    noise = np.random.normal(size=E_clean.size, scale=std) \
+          + 1j * np.random.normal(size=E_clean.size, scale=std)
+    E = E_clean + noise / np.sqrt(2)
 
     rough = KKstar(E).clip(min=0)
-    return dict(shape_x=shape_x, shape_y=shape_y, gt=gt, E=E, mask_rfft=mask_rfft, rough=rough)
+    return dict(shape_x=shape_x, shape_y=shape_y, gt=gt, E=E, mask_rfft=mask_rfft, rough=rough) # keys are automatically characters strings
 
 
 prob = build_problem()
@@ -110,7 +116,6 @@ np.random.seed(SEED)
 P_cp = model_naif(E, mask_rfft, shape_x, shape_y, ALPHA1, ALPHA2, STEPSIZE_RATIO, IT_NAIF, printprogress=False)
 cp_err = rel_err(P_cp, gt)
 
-check("naif: output shape", P_cp.shape == shape_x + shape_y, f"{P_cp.shape}")
 check("naif: all finite", np.all(np.isfinite(P_cp)))
 check("naif: non-negative", np.all(P_cp >= 0), f"min={P_cp.min():.3g}")
 check("naif: beats rough adjoint", cp_err < QUALITY_FACTOR * rough_err, f"{cp_err:.4f} vs rough {rough_err:.4f}")

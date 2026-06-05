@@ -19,7 +19,7 @@ _ROOT = _TVW1.parent                         # .../PYTHON
 
 _DIRS = [
     _ROOT / "Libraries",   # general-purpose, cross-project toolbox (untouched)
-    _TVW1 / "core",        # TVW1-specific shared operators / forward / metrics / graphs
+    _TVW1 / "core",        # TVW1-specific shared operators / forward / metrics / graph_DR_auxiliary_functions
     _TVW1 / "models",      # the variational models
     _TVW1 / "data",        # test-data generators
 ]
