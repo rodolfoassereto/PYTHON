@@ -16,20 +16,20 @@ TVW1/
 ├── paths.py            bootstrap: wires sys.path from the repo location
 ├── core/               TVW1-specific shared building blocks
 │   ├── operators.py        II, JJ, PP  (per-voxel mass / zero-mean projections)
-│   ├── forward.py          KK (undersampled rFFT) and UF (masked FFT)
+│   ├── forward.py          KK_factory (undersampled rFFT) + KK (masked full FFT, legacy)
 │   ├── metrics.py          voxelwise W1/W2 (POT), W1_naif, build_cost_matrix
 │   └── graph_DR_auxiliary_functions.py           graph-DR topology: (Z, parent_node, d), λ₁ enumeration
 ├── models/             the variational models (see table below)
 ├── data/               test-data generators (side-effect-free)
 │   ├── gaussians.py        crossing-fibre mixtures (+ covariance helpers)
 │   ├── displacements.py    bars, gammas, stars, spirals
-│   ├── masks.py            undersampling masks
-│   └── real.py / assets/   Sebastian tensors (needs dt.mat — not in repo)
+│   └── masks.py            undersampling masks
 ├── experiments/
 │   ├── diffusion/          the active line (00/01/02, each with results/)
 │   ├── behavior/           "what does W1-TV do" demos (each with results/)
 │   └── archive/            non-reproducible material (see below)
-└── papers/                 reference PDFs
+├── tests/                  test_l2_tvw1_naif.py (CP + graph-DR correctness)
+└── papers/                 reference PDFs / write-ups (see below)
 ```
 
 Top-level `Libraries/` (outside TVW1) stays the general, cross-project toolbox:
@@ -100,5 +100,26 @@ Re-running a script writes fresh figures next to it.
 - `misc/` — obsolete models (`L2_TVW1_basic__*`), the old `_CESTINO` images,
   hand-saved `plot-NNN.png` figures, inpainting demos.
 
-Also note: `data/real.py` (Sebastian tensors) needs `dt.mat` in `data/assets/`,
-which is **not in the repo** and is git-ignored.
+There is currently no real-data loader in the tree: `data/assets/` is empty and
+the former `data/real.py` (Sebastian tensors from `dt.mat`) placeholder has been
+removed. Add it back here if/when real diffusion data is wired in.
+
+## Tests
+
+`tests/test_l2_tvw1_naif.py` checks both solvers of the L2-TVW1 naif model on the
+seeded gaussian-mixture toy: output is finite / non-negative, the regularized
+reconstruction beats the zero-filled adjoint, the CP Cauchy residual is small,
+graph-DR consensus/feasibility/error diagnostics decrease, CP and graph-DR agree
+in quality, and both are bit-deterministic per seed. Run it as a script (exits
+non-zero on failure) or cell-by-cell.
+
+## Papers (`papers/`)
+
+- `TV_Wasserstein_for_Diffusion/` (`main.tex`) — the project write-up: motivation,
+  the anisotropic-W1-TV model for EAP reconstruction, and results/figures.
+- `Formulations and surrogate problem.tex` — exact primal / dual / saddle-point
+  formulation of the L2-TVW1-naif model, and the *surrogate* functions
+  (reverse-Huber `φ_M`) that replace the two divergent indicator terms so the
+  primal–dual gap is finite and usable as a stopping criterion.
+- `Bredies_Chenchene_Naldi_Graph_Douglas-Rachford.pdf` — the graph
+  Douglas–Rachford method underlying `model_naif_graph` and the λ₁ topology study.
