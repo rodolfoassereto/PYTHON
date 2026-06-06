@@ -13,13 +13,12 @@ Callers must `import paths` first so those directories are on sys.path.
 """
 import numpy as np
 
-
 def model_naif(E, mask_rfft, shape_x, shape_y, alpha1, alpha2, stepsize_ratio, iterations, printprogress=True):
 
     from operators import II, IIstar, JJ, JJstar
     from forward import KK_factory, KKstar_factory
     from differential_operators import nabla_x, nabla_y, div_x, div_y
-    from prox_and_proj import prox_norm21, proj_infty_ball
+    from prox_and_proj import prox_norm21, proj_L_infty_ball
     from algorithms_general import CP
     from numpy.random import rand as rd
 
@@ -35,6 +34,14 @@ def model_naif(E, mask_rfft, shape_x, shape_y, alpha1, alpha2, stepsize_ratio, i
     shape_l = E.shape
     l0 = rd(*shape_l) + 1j * rd(*shape_l)
 
+    def set_center_Y_to_zero(f, ndim_x, ndim_y, shape_y):
+        assert ndim_y <= f.ndim - ndim_x
+        ndim_0 = f.ndim - ndim_x - ndim_y
+        f1 = f.copy()
+        ind = (slice(None),)*(ndim_0+ndim_x) + tuple( np.array(shape_y) // 2 )
+        f1[ind] = 0
+        return f1
+
     assert np.fft.rfftn(P0).shape == mask_rfft.shape and np.sum(mask_rfft) == E.size
 
     x0 = {'P': P0, 'Q': Q0}
@@ -45,8 +52,8 @@ def model_naif(E, mask_rfft, shape_x, shape_y, alpha1, alpha2, stepsize_ratio, i
 
     prox_f = lambda x, tau: {'P': x['P'].clip(min=0),
                              'Q': prox_norm21(x['Q'], tau * alpha1, 0)}
-    prox_gstar = lambda u, sigma: {'f': u['f'],
-                                   'g': proj_infty_ball(u['g'] / alpha2),
+    prox_gstar = lambda u, sigma: {'f': set_center_Y_to_zero(u['f'], ndim_x, ndim_y, shape_y),
+                                   'g': proj_L_infty_ball(u['g'] / alpha2),
                                    'l': (u['l'] - sigma * E) / (1 + sigma)}
     L = lambda x: {'f': nabla_x(JJ(x['P'], shape_x, shape_y), dim=ndim_x) + div_y(x['Q']),
                    'g': nabla_x(II(x['P'], shape_x, shape_y), dim=ndim_x),
@@ -68,7 +75,7 @@ def model_naif_graph(E, mask_rfft, shape_x, shape_y, alpha1, alpha2, graph_DR_pa
                      printprogress=True, return_history=False, extra_metrics_fn=None, record_every=1):
     """Same model, solved by graph Douglas-Rachford.
 
-    graph_DR_parameters = (Z, parent_node, d); build it with core/graphs.py.
+    graph_DR_parameters = (Z, parent_node, d); build it with core/graph_DR_auxiliary_functions.py.
     """
     Z, parent_node, d = graph_DR_parameters
 
@@ -78,7 +85,7 @@ def model_naif_graph(E, mask_rfft, shape_x, shape_y, alpha1, alpha2, graph_DR_pa
     from solve_linear_systems import (laplacian_eigenvalues, resolvent_with_laplacian,
                                       resolvent_with_II, resolvent_with_JJ,
                                       resolvent_with_undersampling_withmask)
-    from prox_and_proj import prox_norm21, proj_infty_ball
+    from prox_and_proj import prox_norm21, proj_L_infty_ball
     from algorithms_general import graph_DR
     from numpy.random import rand as rd
 
@@ -89,6 +96,14 @@ def model_naif_graph(E, mask_rfft, shape_x, shape_y, alpha1, alpha2, graph_DR_pa
     f0 = rd(*shape_f)
     shape_Q = nabla_y(f0, dim=ndim_y).shape
     shape_g = nabla_x(II(P0, shape_x, shape_y), dim=ndim_x).shape
+
+    def set_center_Y_to_zero(f, ndim_x, ndim_y, shape_y):
+        assert ndim_y <= f.ndim - ndim_x
+        ndim_0 = f.ndim - ndim_x - ndim_y
+        f1 = f.copy()
+        ind = (slice(None),)*(ndim_0+ndim_x) + tuple( np.array(shape_y) // 2 )
+        f1[ind] = 0
+        return f1
 
     assert np.fft.rfftn(P0).shape == mask_rfft.shape and np.sum(mask_rfft) == E.size
 
@@ -105,8 +120,8 @@ def model_naif_graph(E, mask_rfft, shape_x, shape_y, alpha1, alpha2, graph_DR_pa
     def J_0(z, lam):
         P = prox_F1(z['P'], lam)
         Q = prox_F2(z['Q'], lam)
-        f = z['f']
-        g = proj_infty_ball(z['g'], alpha2)
+        f = set_center_Y_to_zero(z['f'], ndim_x, ndim_y, shape_y)
+        g = proj_L_infty_ball(z['g'], alpha2)
         return {'P': P, 'Q': Q, 'f': f, 'g': g}
 
     axes_x = tuple(i for i in range(ndim_x))
