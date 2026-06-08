@@ -87,7 +87,7 @@ def plot_u(u, ndim_y, title=None, save=False, name='newname.jpg', return_fig=Fal
         return fig
     else:
         plt.show()
-    
+        plt.close(fig)
     return
 
 def plot_u_3d(u, spacing_along_first_axis=2):
