@@ -30,8 +30,8 @@ def PP(P, shape_x, shape_y):
 
 
 def JJ(P, shape_x, shape_y):
-    N = np.prod(shape_y)
-    return P - IIstar(II(P, shape_x, shape_y) / N, shape_y)
+    size_y = np.prod(shape_y)
+    return P - IIstar(II(P, shape_x, shape_y) / size_y, shape_y)
 
 
 JJstar = JJ  # JJ is self adjoint
