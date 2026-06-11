@@ -13,6 +13,12 @@ Callers must `import paths` first so those directories are on sys.path.
 """
 import numpy as np
 
+def central_Y_indices(f, shape_x, shape_y): # returns the indices of the Y-centers; f is only needed for its shape actually
+    ndim_x, ndim_y = len(shape_x), len(shape_y)
+    ndim_0 = f.ndim - ndim_x - ndim_y
+    assert ndim_0 >= 0
+    return (slice(None),)*(ndim_0+ndim_x) + tuple( np.array(shape_y) // 2 )
+
 def model_naif(E, mask_rfft, shape_x, shape_y, alpha1, alpha2, stepsize_ratio, iterations, printprogress=True):
 
     from operators import II, IIstar, JJ, JJstar
@@ -97,14 +103,6 @@ def model_naif_graph(E, mask_rfft, shape_x, shape_y, alpha1, alpha2, graph_DR_pa
     shape_Q = nabla_y(f0, dim=ndim_y).shape
     shape_g = nabla_x(II(P0, shape_x, shape_y), dim=ndim_x).shape
 
-    def set_center_Y_to_zero(f, ndim_x, ndim_y, shape_y):
-        assert ndim_y <= f.ndim - ndim_x
-        ndim_0 = f.ndim - ndim_x - ndim_y
-        f1 = f.copy()
-        ind = (slice(None),)*(ndim_0+ndim_x) + tuple( np.array(shape_y) // 2 )
-        f1[ind] = 0
-        return f1
-
     assert np.fft.rfftn(P0).shape == mask_rfft.shape and np.sum(mask_rfft) == E.size
 
     KKstar = KKstar_factory(mask_rfft)
@@ -120,7 +118,9 @@ def model_naif_graph(E, mask_rfft, shape_x, shape_y, alpha1, alpha2, graph_DR_pa
     def J_0(z, lam):
         P = prox_F1(z['P'], lam)
         Q = prox_F2(z['Q'], lam)
-        f = set_center_Y_to_zero(z['f'], ndim_x, ndim_y, shape_y)
+        f = z['f'].copy()
+        ind = central_Y_indices(f, shape_x, shape_y)
+        f[ind] = 0
         g = proj_L_infty_ball(z['g'], alpha2)
         return {'P': P, 'Q': Q, 'f': f, 'g': g}
 
@@ -139,7 +139,7 @@ def model_naif_graph(E, mask_rfft, shape_x, shape_y, alpha1, alpha2, graph_DR_pa
         Q = z['Q']
         f = z['f'] + lam * nabla_x(JJ(P, shape_x, shape_y), dim=ndim_x)
         g = z['g']
-        return {'P': P.clip(min=0), 'Q': Q, 'f': f, 'g': g}
+        return {'P': P, 'Q': Q, 'f': f, 'g': g}
 
     def J_2(z, lam):
         b = z['P'] + lam * IIstar(div_x(z['g']), shape_y)
@@ -158,7 +158,7 @@ def model_naif_graph(E, mask_rfft, shape_x, shape_y, alpha1, alpha2, graph_DR_pa
         f = resolvent_with_laplacian(b, pointwise_division_J3, axes_y, sigma=None)
         Q = z['Q'] + lam * nabla_y(f, dim=ndim_y)
         g = z['g']
-        return {'P': P, 'Q': Q, 'f': f, 'g': g}
+        return {'P': P.clip(min=0), 'Q': Q, 'f': f, 'g': g}
 
     resolvents = [J_0, J_1, J_2, J_3]
     N = len(resolvents)
@@ -174,3 +174,32 @@ def model_naif_graph(E, mask_rfft, shape_x, shape_y, alpha1, alpha2, graph_DR_pa
         history = None
 
     return x, w, history
+
+
+def phi_surrogate(t, M):
+    if np.abs(t) <= M:
+        return np.abs(t)
+    else:
+        return M/2 + t**2 / (2*M)
+
+def primal(P, Q, E, KK, C_Q, C_f, alpha_1, alpha_2, shape_x, shape_y):
+    from differential_operators import nabla_x, div_y
+    from operators import II, JJ
+    ndim_x = len(shape_x)
+
+    argument = nabla_x( JJ(P, shape_x, shape_y), dim=ndim_x ) + div_y(Q)
+    ind = central_Y_indices( argument, shape_x, shape_y )
+    argument[ind] = 0 # summing the not-Y-central indices is equivalent to summing all but setting the centers to zero
+
+    add_1 = 0.5 * np.sum( np.abs( KK(P)-E )**2 )
+    add_2 = phi_surrogate( alpha_1 * np.sum(np.linalg.norm(Q, axis=0)) , C_Q )
+    add_3 = C_f * np.sum( np.abs( argument ) )
+    add_4 = alpha_2 * np.sum( np.abs( nabla_x( II(P, shape_x, shape_y), dim=ndim_x ) ) )
+
+    return add_1 + add_2 + add_3 + add_4
+
+def dual(f,g):
+
+    
+
+    return
