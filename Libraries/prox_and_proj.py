@@ -2,6 +2,8 @@
 
 import numpy as np
 
+# %% Proximity operators
+
 def prox_norm1(x, lam=1): # This function outputs the prox operator of the L1 norm of an n-dim array
     greater, less = x>lam, x<-lam
     y = np.zeros(x.shape)
@@ -136,10 +138,11 @@ def make_prox_box(l, u):
         return {"x": np.clip(y, l, u)}
     return prox
 
-###### PROJECTIONS ######
+# %% Projections
 
 def proj_L_infty_ball(x, lam=1): # lam is the "radius" of the L infinity ball
-    return np.minimum(np.abs(x), lam) * np.sign(x)
+    # return np.minimum(np.abs(x), lam) * np.sign(x)
+    return x.clip(-lam, lam)
 
 def proj_ball_L2(x, lam=1): # lam is the radius of the ball
     return x - prox_norm2(x, lam=lam)
