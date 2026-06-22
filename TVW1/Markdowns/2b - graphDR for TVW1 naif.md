@@ -21,9 +21,9 @@ where:
 - $f,g$ are dual variables;
 - $K=UF$, with $F$ the unitary Fourier transform and $U$ the sampling mask;
 - $\mathbb J$ and $\mathbb I$ are the lifted operators from the variational problem;
-- $\nabla_\Omega$ is the spatial gradient;
+- $\nabla_{X}$ is the spatial gradient;
 - $\nabla_Y$ is the gradient in the displacement/$Y$ variable;
-- $\operatorname{div}_\Omega$, $\operatorname{div}_Y$ are the corresponding discrete divergences.
+- $\operatorname{div}_{X}$, $\operatorname{div}_Y$ are the corresponding discrete divergences.
 
 The functional blocks used in the notes are
 
@@ -65,10 +65,10 @@ The handwritten optimality system is encoded by the block inclusion
 $$
 0\in
 \begin{pmatrix}
-\partial F_1(P) & 0 & -\mathbb J^*\operatorname{div}_\Omega & -\mathbb I^*\operatorname{div} \\
-0 & \partial F_2(Q) & -\nabla_Y & 0 \\
-\nabla_\Omega\mathbb J & \operatorname{div}_Y & \partial G_1(f) & 0 \\
-\nabla\mathbb I & 0 & 0 & \partial G_2(g)
+\partial F_1 & 0 & -\mathbb J^*\operatorname{div}_{X} & -\mathbb I^*\operatorname{div} \\
+0 & \partial F_2 & -\nabla_Y & 0 \\
+\nabla_{X}\mathbb J & \operatorname{div}_Y & \partial G_1 & 0 \\
+\nabla\mathbb I & 0 & 0 & \partial G_2
 \end{pmatrix}
 \begin{pmatrix}
 P\\Q\\f\\g
@@ -80,14 +80,14 @@ Equivalently, componentwise:
 $$
 \begin{aligned}
 \partial_P: \quad&
-\partial F_1(P)-\mathbb J^*\operatorname{div}_\Omega f
+\partial F_1(P)-\mathbb J^*\operatorname{div}_{X} f
 -\mathbb I^*\operatorname{div} g \ni 0,
 \\
 \partial_Q: \quad&
 \partial F_2(Q)-\nabla_Y f \ni 0,
 \\
 \partial_f: \quad&
-\partial G_1(f)-\nabla_\Omega\mathbb J P
+\partial G_1(f)-\nabla_{X}\mathbb J P
 +\operatorname{div}_Y Q \ni 0,
 \\
 \partial_g: \quad&
@@ -122,9 +122,9 @@ $$
 $$
 A_1=
 \begin{pmatrix}
-0 & 0 & -\mathbb J^*\operatorname{div}_\Omega & 0\\
+0 & 0 & -\mathbb J^*\operatorname{div}_{X} & 0\\
 0 & 0 & 0 & 0\\
--\nabla_\Omega\mathbb J & 0 & 0 & 0\\
+-\nabla_{X}\mathbb J & 0 & 0 & 0\\
 0 & 0 & 0 & 0
 \end{pmatrix},
 $$
@@ -225,9 +225,9 @@ i.e.
 
 $$
 \begin{pmatrix}
-\operatorname{id} & 0 & -\lambda\mathbb J^*\operatorname{div}_\Omega & 0\\
+\operatorname{id} & 0 & -\lambda\mathbb J^*\operatorname{div}_{X} & 0\\
 0 & \operatorname{id} & 0 & 0\\
--\lambda\nabla_\Omega\mathbb J & 0 & \operatorname{id} & 0\\
+-\lambda\nabla_{X}\mathbb J & 0 & \operatorname{id} & 0\\
 0 & 0 & 0 & \operatorname{id}
 \end{pmatrix}
 \begin{pmatrix}
@@ -243,8 +243,8 @@ Thus
 
 $$
 \begin{cases}
-P-\lambda\mathbb J^*\operatorname{div}_\Omega f=\bar P,\\
-f-\lambda\nabla_\Omega\mathbb J P=\bar f,\\
+P-\lambda\mathbb J^*\operatorname{div}_{X} f=\bar P,\\
+f-\lambda\nabla_{X}\mathbb J P=\bar f,\\
 Q=\bar Q,\\
 g=\bar g.
 \end{cases}
@@ -253,9 +253,9 @@ $$
 Substituting the second equation into the first gives
 
 $$
-\left(\operatorname{id}-\lambda^2\mathbb J^*\Delta_\Omega\mathbb J\right)P
+\left(\operatorname{id}-\lambda^2\mathbb J^*\Delta_{X}\mathbb J\right)P
 =
-\bar P+\lambda\mathbb J^*\operatorname{div}_\Omega\bar f.
+\bar P+\lambda\mathbb J^*\operatorname{div}_{X}\bar f.
 $$
 
 Therefore
@@ -263,8 +263,8 @@ Therefore
 $$
 \boxed{
 P=
-\left(\operatorname{id}-\lambda^2\mathbb J^*\Delta_\Omega\mathbb J\right)^{-1}
-\left(\bar P+\lambda\mathbb J^*\operatorname{div}_\Omega\bar f\right)
+\left(\operatorname{id}-\lambda^2\mathbb J^*\Delta_{X}\mathbb J\right)^{-1}
+\left(\bar P+\lambda\mathbb J^*\operatorname{div}_{X}\bar f\right)
 }
 $$
 
@@ -272,7 +272,7 @@ and then
 
 $$
 \boxed{
-f=\bar f+\lambda\nabla_\Omega\mathbb J P,
+f=\bar f+\lambda\nabla_{X}\mathbb J P,
 \qquad
 Q=\bar Q,
 \qquad
@@ -513,12 +513,12 @@ The last two pages of the handwritten notes derive efficient inverses for the li
 
 ---
 
-## 8.1. Inverting $\operatorname{id}-\delta\mathbb J^*\Delta_\Omega\mathbb J$
+## 8.1. Inverting $\operatorname{id}-\delta\mathbb J^*\Delta_{X}\mathbb J$
 
 The goal is to invert
 
 $$
-\operatorname{id}-\delta\mathbb J^*\Delta_\Omega\mathbb J.
+\operatorname{id}-\delta\mathbb J^*\Delta_{X}\mathbb J.
 $$
 
 The notes use the tensor-product structure
@@ -526,13 +526,13 @@ The notes use the tensor-product structure
 $$
 \mathbb J=\operatorname{id}_{n_x}\otimes J,
 \qquad
-\Delta_\Omega=\Delta\otimes\operatorname{id}_{n_y}.
+\Delta_{X}=\Delta\otimes\operatorname{id}_{n_y}.
 $$
 
 Therefore
 
 $$
-\mathbb J^*\Delta_\Omega\mathbb J
+\mathbb J^*\Delta_{X}\mathbb J
 =
 (\operatorname{id}_{n_x}\otimes J^*)
 (\Delta\otimes\operatorname{id}_{n_y})
@@ -546,7 +546,7 @@ where the last equality uses the projection properties of $J$.
 Thus
 
 $$
-\left(\operatorname{id}-\delta\mathbb J^*\Delta_\Omega\mathbb J\right)^{-1}
+\left(\operatorname{id}-\delta\mathbb J^*\Delta_{X}\mathbb J\right)^{-1}
 =
 \left(\operatorname{id}-\delta\Delta\otimes J\right)^{-1}.
 $$
@@ -614,7 +614,7 @@ $$
 =
 \operatorname{id}-\delta\Delta\otimes\operatorname{id}_{n_y}
 =
-\operatorname{id}-\delta\Delta_\Omega.
+\operatorname{id}-\delta\Delta_{X}.
 $$
 
 Therefore, to solve
@@ -644,7 +644,7 @@ Then
 $$
 z_{\mathbb P}=c_{\mathbb P},
 \qquad
-(\operatorname{id}-\delta\Delta_\Omega)z_{\mathbb J}=c_{\mathbb J}.
+(\operatorname{id}-\delta\Delta_{X})z_{\mathbb J}=c_{\mathbb J}.
 $$
 
 Hence the final formula is
@@ -655,7 +655,7 @@ z=z_{\mathbb P}+z_{\mathbb J},
 \qquad
 z_{\mathbb P}=\mathbb P c,
 \qquad
-z_{\mathbb J}=(\operatorname{id}-\delta\Delta_\Omega)^{-1}\mathbb Jc.
+z_{\mathbb J}=(\operatorname{id}-\delta\Delta_{X})^{-1}\mathbb Jc.
 }
 $$
 
@@ -852,9 +852,9 @@ the resolvents are:
 
 $$
 \begin{aligned}
-P&=(\operatorname{id}-\lambda^2\mathbb J^*\Delta_\Omega\mathbb J)^{-1}
-(\bar P+\lambda\mathbb J^*\operatorname{div}_\Omega\bar f),\\
-f&=\bar f+\lambda\nabla_\Omega\mathbb JP,\\
+P&=(\operatorname{id}-\lambda^2\mathbb J^*\Delta_{X}\mathbb J)^{-1}
+(\bar P+\lambda\mathbb J^*\operatorname{div}_{X}\bar f),\\
+f&=\bar f+\lambda\nabla_{X}\mathbb JP,\\
 Q&=\bar Q,\\
 g&=\bar g.
 \end{aligned}
@@ -937,5 +937,4 @@ $$
 4. **The Fourier inversion for the fidelity prox.**  
    Since $K=UF$, the fidelity prox is diagonal after applying $F$.
 
-5. **The optional positivity projection for $P$.**  
-   The handwritten note contains a crossed-out $P=\operatorname{proj}_{\ge0}(\bar P)$. It should only be included if the final algorithm explicitly incorporates the constraint $P\ge0$ in the corresponding block.
+5. 

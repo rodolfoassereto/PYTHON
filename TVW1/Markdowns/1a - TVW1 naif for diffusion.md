@@ -32,7 +32,7 @@ The target is the **Ensemble Average Propagator** $\bar P(x,r)$: the probability
 molecule at voxel $x\in\mathbb R^3$ undergoes displacement $r\in\mathbb R^3$. Folding in the spin
 density $\rho(x)$, the reconstructed object is the **weighted** displacement distribution
 
-$ P(x,r):=\rho(x)\,\bar{P}(x,r),\qquad P:{X}\times Y\to\mathbb{R} . $
+$ P(x,r):=\rho(x)\,\bar{P}(x,r),\qquad P:{X}\times Y\to\mathbb{R}_{\ge0} . $
 
 On discrete grids this is a 4-tensor $P\in\mathbb R^{m_1\times m_2\times n_1\times n_2}$ (2-D used
 for notational convenience; nothing changes in 3-D + 3-D). $P(x, \cdot)$ is a **map valued in a space of functions** - one displacement PDF per voxel - which is exactly the structure the regularizer below is built to exploit.
@@ -89,6 +89,8 @@ $W_1(P_1,P_2)=\max_{\mathrm{Lip}(f)\le1}\int_Y f(y)\big(P_2(y)-P_1(y)\big)\,dy,
 
 The constraint is **local** (a gradient bound), and the dual variable $f$ has the **same size** as $P$, versus the quadratic size of a transport plan $\gamma$ - the numerical reason for using this dual formulation.
 
+Moreover, the value of the max is invariant under additive constants in the dual variable ($f\mapsto f+c, \ c \text{ constant}$. For this reason, we will force a condition of the type $"f(0)=0"$, in the following. This does not change the problem and will come in handy. We write this condition as $\delta f =0$, where $\delta$ checks the value of $f$ in 0 (i.e. in an entry when an array).
+
 ### 3.4 Splitting the regularizer
 
 Applying $\mathbb I,\mathbb J$ (which act per-voxel), the OT-TV splits exactly into a transport part and a
@@ -99,7 +101,7 @@ $\boxed{\;\mathrm{TV}^{\alpha_1,\alpha_2}_{\hat W_1}(P)
 
 Dualizing each piece:
 
-$\mathrm{TV}_{W_1}(\mathbb J P)=\max_{\|\nabla_Y f\|_{2,\infty}\le1}\langle\nabla_{X}\mathbb J P,\,f\rangle,
+$\mathrm{TV}_{W_1}(\mathbb J P)=\max_{\substack{\|\nabla_Y f\|_{2,\infty}\le1 \\ \delta f =0}}\langle\nabla_{X}\mathbb J P,\,f\rangle,
 \qquad
 \mathrm{TV}(\mathbb I P)=\|\nabla\mathbb I P\|_1=\max_{\|g\|_\infty\le1}\langle\nabla\mathbb I P,\,g\rangle,$
 
@@ -124,14 +126,14 @@ $g$ is the mass-TV dual. The result, with primal $x=(P,Q)$ and dual $u=(f,g)$:
 
 $\min_{P,Q}\ \max_{f,g}\quad
 \underbrace{\tfrac12\|K P-E\|^2+\alpha_1\|Q\|_{2,1}}_{F(P,Q)}
-\;-\;\underbrace{\mathcal I_{B_\infty}\!\big(\tfrac1{\alpha_2}g\big)}_{G(f,g)}
+\;-\big(\;\underbrace{\mathcal I_0(\delta f) + \mathcal I_{B_\infty}\!\big(\tfrac1{\alpha_2}g\big)\big)}_{G(f,g)}
 \;+\;\langle\nabla_{X}\mathbb J P,\,f\rangle+\langle\operatorname{div}_Y Q,\,f\rangle+\langle\nabla\mathbb I P,\,g\rangle .$
 
 The coupling operator and its adjoint are:
 
 $\mathcal K=\begin{pmatrix}\nabla_{X}\mathbb J & \operatorname{div}_Y\\[2pt]\nabla\mathbb I & 0\end{pmatrix},
 \qquad
-\mathcal K^{*}=-\begin{pmatrix}\mathbb J\operatorname{div}_{X}\mathbb I^{*}\operatorname{div}\\[2pt]\nabla_Y & 0\end{pmatrix}
+\mathcal K^{*}=-\begin{pmatrix}\mathbb J\operatorname{div}_{X} & \mathbb I^{*}\operatorname{div}\\[2pt]\nabla_Y & 0\end{pmatrix}
 \quad(\text{using }\mathbb J=\mathbb J^{*}).$
 
 > **▷ Beckmann / continuity-equation reading.** The $f$-maximization is finite only on the affine set where the flux balances the spatial gradient of the normalized mass; at optimality $\nabla_{X}\mathbb J P+\operatorname{div}_Y Q=0$. Equivalently, $\mathrm{TV}_{W_1}(\mathbb J P)$ is the **minimum-flux (Beckmann) problem** $\min_Q\{\alpha_1\|Q\|_{2,1}:\operatorname{div}_Y Q=-\nabla_X\mathbb J P\}$.
@@ -139,9 +141,22 @@ $\mathcal K=\begin{pmatrix}\nabla_{X}\mathbb J & \operatorname{div}_Y\\[2pt]\nab
 > 
 > - the primal blow-up term in the gap-surrogate notes. So $Q$ here *is* the variable those notes bound.
 
+(\*\*) Note that we have ****not** enforced positivity of the EAP, here. If we do, we get a slightly different problem
+
+$$
+\min_{P,Q}\ \max_{f,g}\quad
+\underbrace{\mathcal I_{\ge0}(P)+ \tfrac12\|K P-E\|^2+\alpha_1\|Q\|_{2,1}}_{F(P,Q)}
+\;-\big(\;\underbrace{\mathcal I_0(\delta f) + \mathcal I_{B_\infty}\!\big(\tfrac1{\alpha_2}g\big)\big)}_{G(f,g)}
+\;+\;\langle\nabla_{X}\mathbb J P,\,f\rangle+\langle\operatorname{div}_Y Q,\,f\rangle+\langle\nabla\mathbb I P,\,g\rangle .
+$$
+
+which not solvable in a straightforward way (i.e. via Chambolle-Pock).
+
 ---
 
-## 6. Algorithm - Chambolle–Pock
+## 6. Proximal algorithms
+
+Now, we will use Chambolle-Pock. But the final version will employ Graph-Douglas-Rachford.
 
 Iterate, with $\tau\sigma\|\mathcal K\|^2\le1$ and over-relaxation $\rho^{(i)}=1$:
 
