@@ -85,15 +85,15 @@ def TVL1(x):
     return np.sum( np.abs(nabla(x)) )
 
 
+if __name__ == 'main':
+    img = np.zeros((7,7))
+    img[:3,:3] = 1
+    img[:3,3:] = 0.666
+    img[3:,:3] = 0.333
+    plt.imshow(img, cmap='gray', vmin=0, vmax=1)
+    plt.show()
 
-img = np.zeros((7,7))
-img[:3,:3] = 1
-img[:3,3:] = 0.666
-img[3:,:3] = 0.333
-plt.imshow(img, cmap='gray', vmin=0, vmax=1)
-plt.show()
-
-plt.close('all')
-img_reg = L1_TVL1(img, 10, iterations=40000)
-plt.imshow(img_reg, cmap='gray', vmin=0, vmax=1)
-plt.show()
+    plt.close('all')
+    img_reg = L1_TVL1(img, 10, iterations=40000)
+    plt.imshow(img_reg, cmap='gray', vmin=0, vmax=1)
+    plt.show()
