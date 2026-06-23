@@ -54,7 +54,7 @@ def prova_CP(A, C, b, iterations=10000): # min_{Cx >= 0} = 1/2 ||Ax - b||^2
 
     # Run Chambolle-Pock Algorithm
     t1 = time.time()
-    from algorithms_general import CP
+    from proximal_algorithms.CP import CP
     x_opt, u_opt = CP(x0, u0, tau, sigma, prox_f, prox_gstar, L, Lstar, iterations, printprogress=False)
     x_opt = x_opt['x']
     t2 = time.time()
@@ -97,7 +97,7 @@ def prova_pDR_Richardson(A, C, b, iterations=10000): # min_{Cx >= 0} = 1/2 ||Ax 
     x0 = {'x': np.zeros(n)}  # Starting at zero
 
     # Run Chambolle-Pock Algorithm
-    from algorithms_general import pDR_Richardson
+    from proximal_algorithms.pDR import pDR_Richardson
     
     K_norm_sq = max(np.linalg.svd(C, compute_uv=False))**2
     # K_norm_sq = np.sum( C**2 )
@@ -118,7 +118,7 @@ def prova_pDR_Richardson(A, C, b, iterations=10000): # min_{Cx >= 0} = 1/2 ||Ax 
 from scipy.optimize import minimize
 from scipy.linalg import cho_factor, cho_solve
 
-from algorithms_general import graph_DR
+from proximal_algorithms.graph_DR import graph_DR
 
 # Minimize over x ∈ R^M:   0.5 * ||A x - b||^2  +   λ * sum_i Huber_δ(x_i)   +   I_{[l, u]^M}(x)
 #
@@ -291,7 +291,7 @@ def prova_DR(A, b): # min_{x >= 0} = 1/2 ||Ax - b||^2; confronto con soluzione d
     s0 = {'x': np.zeros(A.shape[1])}  # Starting at zero
 
     # Run Chambolle-Pock Algorithm
-    from algorithms_general import DR
+    from proximal_algorithms.DR import DR
     
     x_opt, s_opt = DR(s0, prox_f, prox_g, iterations=10000 )
     

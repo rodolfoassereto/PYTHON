@@ -15,7 +15,7 @@ def model_W1_TVW1(u_bar, shape_x, shape_y, alpha, iterations, printprogress=True
 
     from differential_operators import nabla_x, nabla_y, div_x, div_y
     from prox_and_proj import prox_norm21, proj_simplex_array
-    from algorithms_general import CP
+    from proximal_algorithms.CP import CP
     from numpy.random import rand as rd
 
     ndim_x, ndim_y = len(shape_x), len(shape_y)

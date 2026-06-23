@@ -33,9 +33,19 @@ TVW1/
 ```
 
 Top-level `Libraries/` (outside TVW1) stays the general, cross-project toolbox:
-the solvers `CP`, `graph_DR`, `DR`, `pDR_Richardson` (`algorithms_general.py`),
 the discrete operators (`differential_operators.py`), `prox_and_proj.py`,
-`solve_linear_systems.py`, `plottings.py`, …
+`solve_linear_systems.py`, `plottings.py`, …, and the `proximal_algorithms/`
+package containing the solvers:
+
+```
+proximal_algorithms/
+├── __init__.py
+├── CP.py            — Chambolle-Pock
+├── DR.py            — Douglas-Rachford
+├── pDR.py           — preconditioned Douglas-Rachford (Richardson)
+├── graph_DR.py      — graph Douglas-Rachford (Bredies, Chenchene & Naldi 2022)
+└── utils_for_dict.py — add_dicts, subtract_dicts, scalar_multiply_dict, inner_product_dicts
+```
 
 ## Running things
 

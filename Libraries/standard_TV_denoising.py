@@ -37,7 +37,7 @@ blur = lambda img, kernel: scipy.signal.convolve2d(img, kernel, mode='same', bou
 
 def L2_TV(b, alpha, maxit=5000):
     
-    from algorithms_general import CP
+    from proximal_algorithms.CP import CP
     from prox_and_proj import proj_ball_L_2_infty
     
     prox_f = lambda X, tau: { 'x': (X['x'] + tau*b) / (1+ tau) }
@@ -57,7 +57,7 @@ def L2_TV(b, alpha, maxit=5000):
 
 def L1_TVL1(b , alpha, iterations=5000):
 
-    from algorithms_general import CP
+    from proximal_algorithms.CP import CP
     from prox_and_proj import proj_L_infty_ball, prox_norm1
     
     prox_f = lambda X, tau: { 'x': b + prox_norm1( X['x'] - b , tau ) }

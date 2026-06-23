@@ -8,7 +8,7 @@ saddle-point form of
   model_naif_graph  : graph Douglas-Rachford (Bredies, Chenchene & Naldi 2022)
 
 Shared operators come from core/ (operators.II/JJ/PP, forward.KK_*); generic
-solvers and discrete operators from Libraries/ (algorithms_general, ...).
+solvers and discrete operators from Libraries/....
 Callers must `import paths` first so those directories are on sys.path.
 """
 import numpy as np
@@ -25,7 +25,7 @@ def model_naif(E, mask_rfft, shape_x, shape_y, alpha1, alpha2, stepsize_ratio, i
     from forward import KK_factory, KKstar_factory
     from differential_operators import nabla_x, nabla_y, div_x, div_y
     from prox_and_proj import prox_norm21, proj_L_infty_ball
-    from algorithms_general import CP
+    from proximal_algorithms.CP import CP
     from numpy.random import rand as rd
 
     ndim_x, ndim_y = len(shape_x), len(shape_y)
@@ -92,7 +92,7 @@ def model_naif_graph(E, mask_rfft, shape_x, shape_y, alpha1, alpha2, C_P, C_Q, C
                                       resolvent_with_II, resolvent_with_JJ,
                                       resolvent_with_undersampling_withmask)
     from prox_and_proj import prox_norm21, proj_L_infty_ball
-    from algorithms_general import graph_DR
+    from proximal_algorithms.graph_DR import graph_DR
     from numpy.random import rand as rd
 
     ndim_x, ndim_y = len(shape_x), len(shape_y)
