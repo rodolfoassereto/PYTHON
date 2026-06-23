@@ -29,7 +29,7 @@ TVW1/
 │   ├── behavior/           "what does W1-TV do" demos (each with results/)
 │   └── archive/            non-reproducible material (see below)
 ├── tests/                  test_l2_tvw1_naif.py (CP + graph-DR correctness)
-└── papers/                 reference PDFs / write-ups (see below)
+└── Markdowns/              notes and write-ups in Markdown (see below)
 ```
 
 Top-level `Libraries/` (outside TVW1) stays the general, cross-project toolbox:
@@ -59,12 +59,12 @@ cell-by-cell, or as a whole file.
 
 ## Models (`models/`)
 
-| Module | Functions | Fidelity | Regularizer | Solver |
-|---|---|---|---|---|
-| `l2_tvw1_naif.py` | `model_naif`, `model_naif_graph` | ½‖K·−E‖² (undersampled Fourier) | naif unbalanced TV-W1 (`α₁ TV_W1(JP)+α₂ TV(IP)`) | CP / graph-DR |
-| `l2_tvpr.py` | `L2_TVPR`, `L2_TVPR_Dirichlet` | ½‖K·−E‖² | Piccoli–Rossi TV-W1 (+ optional Dirichlet smoothing) | CP / pDR |
-| `l2_tvpr.py` | `L2`, `L2_2`, `TVPR` | — | — / TV-PR only | CP |
-| `w1_tvw1.py` | `model_W1_TVW1` | W1 (balanced, simplex) | TV-W1 | CP |
+| Module            | Functions                        | Fidelity                        | Regularizer                                          | Solver        |
+| ----------------- | -------------------------------- | ------------------------------- | ---------------------------------------------------- | ------------- |
+| `l2_tvw1_naif.py` | `model_naif`, `model_naif_graph` | ½‖K·−E‖² (undersampled Fourier) | naif unbalanced TV-W1 (`α₁ TV_W1(JP)+α₂ TV(IP)`)     | CP / graph-DR |
+| `l2_tvpr.py`      | `L2_TVPR`, `L2_TVPR_Dirichlet`   | ½‖K·−E‖²                        | Piccoli–Rossi TV-W1 (+ optional Dirichlet smoothing) | CP / pDR      |
+| `l2_tvpr.py`      | `L2`, `L2_2`, `TVPR`             | —                               | — / TV-PR only                                       | CP            |
+| `w1_tvw1.py`      | `model_W1_TVW1`                  | W1 (balanced, simplex)          | TV-W1                                                | CP            |
 
 ## Experiments
 
@@ -74,16 +74,16 @@ when an iterative TV-W1 solver is used. The three folders with no model/algorith
 tag (`w1_naif_properties`, `odf_crossing_fibres`, `curve_reconstruction`) use no
 such solver.
 
-| Experiment (folder) | Model | Algorithm | What it shows | Reproducible? |
-|---|---|---|---|---|
-| `diffusion/00_compare_models__L2-TVW1-naif__CP+graph_DR` | L2-TVW1 naif | CP + graph_DR | CP vs graph-DR on the gaussian-mixture toy | ✅ seeded |
-| `diffusion/01_sweep_sigma__L2-TVW1-naif__graph_DR` | L2-TVW1 naif | graph_DR | graph-DR step-size σ sensitivity | ✅ seeded — set `iterations=30000`, `sigma_values=[0.02,0.1,0.3,1]` to reproduce `results/` |
-| `diffusion/02_graph_topology__L2-TVW1-naif__graph_DR` | L2-TVW1 naif | graph_DR | base-graph algebraic-connectivity (λ₁) study | ✅ seeded — `RUN_ALL=True` for the all-38 figure |
-| `behavior/angle_regularization__L2-TVPR__CP` | L2-TVPR (Dirichlet) | CP | W1-TV on noisy-angle gaussians ≈ TV on the angle | ✅ seeded |
-| `behavior/reconstruct_4d__W1-TVW1__CP` | W1-TVW1 | CP | W1-TV on bars/rings/mixtures/images (incl. W1-TV ≈ standard TV) | ✅ seed added (was unseeded) |
-| `behavior/w1_naif_properties` | W1-naif (distance) | — (direct OT) | properties of the naif unbalanced W1 (Dirac / mass creation) | ✅ deterministic (needs POT) |
-| `behavior/odf_crossing_fibres` | — (zero-filled IFFT) | — | crossing-fibre ODF from undersampled q-space | ✅ self-contained, seeded (needs scikit-image) |
-| `behavior/curve_reconstruction` | — (data only) | — | curve / video-inpainting **data** | ⚠️ data only — recon/gif pipeline in `archive/traffic_video/legacy_experiments.py` |
+| Experiment (folder)                                      | Model                | Algorithm     | What it shows                                                   | Reproducible?                                                                              |
+| -------------------------------------------------------- | -------------------- | ------------- | --------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| `diffusion/00_compare_models__L2-TVW1-naif__CP+graph_DR` | L2-TVW1 naif         | CP + graph_DR | CP vs graph-DR on the gaussian-mixture toy                      | ✅ seeded                                                                                   |
+| `diffusion/01_sweep_sigma__L2-TVW1-naif__graph_DR`       | L2-TVW1 naif         | graph_DR      | graph-DR step-size σ sensitivity                                | ✅ seeded — set `iterations=30000`, `sigma_values=[0.02,0.1,0.3,1]` to reproduce `results/` |
+| `diffusion/02_graph_topology__L2-TVW1-naif__graph_DR`    | L2-TVW1 naif         | graph_DR      | base-graph algebraic-connectivity (λ₁) study                    | ✅ seeded — `RUN_ALL=True` for the all-38 figure                                            |
+| `behavior/angle_regularization__L2-TVPR__CP`             | L2-TVPR (Dirichlet)  | CP            | W1-TV on noisy-angle gaussians ≈ TV on the angle                | ✅ seeded                                                                                   |
+| `behavior/reconstruct_4d__W1-TVW1__CP`                   | W1-TVW1              | CP            | W1-TV on bars/rings/mixtures/images (incl. W1-TV ≈ standard TV) | ✅ seed added (was unseeded)                                                                |
+| `behavior/w1_naif_properties`                            | W1-naif (distance)   | — (direct OT) | properties of the naif unbalanced W1 (Dirac / mass creation)    | ✅ deterministic (needs POT)                                                                |
+| `behavior/odf_crossing_fibres`                           | — (zero-filled IFFT) | —             | crossing-fibre ODF from undersampled q-space                    | ✅ self-contained, seeded (needs scikit-image)                                              |
+| `behavior/curve_reconstruction`                          | — (data only)        | —             | curve / video-inpainting **data**                               | ⚠️ data only — recon/gif pipeline in `archive/traffic_video/legacy_experiments.py`         |
 
 Each reproducible experiment keeps its reference figures in its own `results/`.
 Re-running a script writes fresh figures next to it.
@@ -110,16 +110,20 @@ removed. Add it back here if/when real diffusion data is wired in.
 seeded gaussian-mixture toy: output is finite / non-negative, the regularized
 reconstruction beats the zero-filled adjoint, the CP Cauchy residual is small,
 graph-DR consensus/feasibility/error diagnostics decrease, CP and graph-DR agree
-in quality, and both are bit-deterministic per seed. Run it as a script (exits
-non-zero on failure) or cell-by-cell.
+in quality, both are bit-deterministic per seed, and the surrogate primal–dual gap
+(see `Markdowns/Notes on the primal-dual gap computation.md`) decreases along the
+graph-DR iterates. Run it as a script (exits non-zero on failure) or cell-by-cell.
 
-## Papers (`papers/`)
+## Markdowns (`Markdowns/`)
 
-- `TV_Wasserstein_for_Diffusion/` (`main.tex`) — the project write-up: motivation,
-  the anisotropic-W1-TV model for EAP reconstruction, and results/figures.
-- `Formulations and surrogate problem.tex` — exact primal / dual / saddle-point
-  formulation of the L2-TVW1-naif model, and the *surrogate* functions
-  (reverse-Huber `φ_M`) that replace the two divergent indicator terms so the
-  primal–dual gap is finite and usable as a stopping criterion.
-- `Bredies_Chenchene_Naldi_Graph_Douglas-Rachford.pdf` — the graph
-  Douglas–Rachford method underlying `model_naif_graph` and the λ₁ topology study.
+- `TV_Wasserstein_for_Diffusion.md` — the project write-up: motivation, the
+  anisotropic-W1-TV model for EAP reconstruction, and results/figures.
+- `Notes on the primal-dual gap computation.md` — exact primal / dual /
+  saddle-point formulation of the L2-TVW1-naif model, and the *surrogate*
+  functions (reverse-Huber `φ_M`) that replace the two divergent indicator terms
+  so the primal–dual gap is finite and usable as a stopping criterion.
+- `Graph_DR.md` / `Graph_DR_trimmed.md` — the graph Douglas–Rachford method
+  underlying `model_naif_graph` and the λ₁ topology study.
+- `computations_for_graph_DR_0.md` — resolvent derivations for the graph-DR blocks.
+- `contiene spiegaz del perché il primal-dual gap è infinito.md` — explanation of
+  why the raw primal–dual gap diverges and the motivation for the surrogate.
