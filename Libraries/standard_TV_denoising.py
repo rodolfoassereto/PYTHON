@@ -29,10 +29,10 @@ build_kernel = lambda size: np.ones((size, size), dtype=np.float32) / (size ** 2
 
 blur = lambda img, kernel: scipy.signal.convolve2d(img, kernel, mode='same', boundary='symm')
 
-pattern = image_to_greyscale_array()
-kernel = build_kernel(15)
-pattern_blurred = blur(pattern, kernel)
-pattern_noisy = pattern + np.random.normal(0, 0.2, pattern.shape)
+# pattern = image_to_greyscale_array()
+# kernel = build_kernel(15)
+# pattern_blurred = blur(pattern, kernel)
+# pattern_noisy = pattern + np.random.normal(0, 0.2, pattern.shape)
 
 
 def L2_TV(b, alpha, maxit=5000):
@@ -58,10 +58,10 @@ def L2_TV(b, alpha, maxit=5000):
 def L1_TVL1(b , alpha, iterations=5000):
 
     from algorithms_general import CP
-    from prox_and_proj import proj_infty_ball, prox_norm1
+    from prox_and_proj import proj_L_infty_ball, prox_norm1
     
     prox_f = lambda X, tau: { 'x': b + prox_norm1( X['x'] - b , tau ) }
-    prox_gstar = lambda Y, sig: { 'y': proj_infty_ball(Y['y'], lam=alpha) }
+    prox_gstar = lambda Y, sig: { 'y': proj_L_infty_ball(Y['y'], lam=alpha) }
     
     L = lambda X: { 'y': nabla(X['x']) }
     Lstar = lambda Y: {'x': -div_x(Y['y']) }
@@ -84,14 +84,16 @@ def TVL2(x):
 def TVL1(x):
     return np.sum( np.abs(nabla(x)) )
 
+
+
 img = np.zeros((7,7))
 img[:3,:3] = 1
 img[:3,3:] = 0.666
 img[3:,:3] = 0.333
-plt.imshow(img, cmap='gray')
+plt.imshow(img, cmap='gray', vmin=0, vmax=1)
 plt.show()
 
 plt.close('all')
-img_reg = L1_TVL1(img, 4, iterations=20000)
-plt.imshow(img_reg, cmap='gray')
+img_reg = L1_TVL1(img, 10, iterations=40000)
+plt.imshow(img_reg, cmap='gray', vmin=0, vmax=1)
 plt.show()
