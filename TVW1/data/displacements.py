@@ -10,8 +10,6 @@ import matplotlib.pyplot as plt
 import matplotlib.path as mpath
 from scipy.ndimage import map_coordinates, shift
 
-from gaussians import gaussian_function_as_matrix
-
 datashape = (6, 6, 15, 15)
 R1, R2, Q1, Q2 = datashape
 M_gammas = 5
@@ -34,7 +32,7 @@ def rotate_image(x, theta):
 
 
 # ---- "-|o." displacements ----
-def displacement_factory(displ_shape, shape=(Q1, Q2), fading=True, normalize=True):
+def displacement_factory(displ_shape, shape=(Q1, Q2), normalize=True):
     q1, q2 = shape
     out = np.full(shape, False)
     if displ_shape == '-':
@@ -78,11 +76,6 @@ def displacement_factory(displ_shape, shape=(Q1, Q2), fading=True, normalize=Tru
             for j in range(q2):
                 if np.linalg.norm([(i - a) / a, (j - b) / b]) <= 3 / 4:
                     out[i, j] = True
-    if fading:
-        coord_0, coord_1 = np.linspace(-1, 1, q1), np.linspace(-1, 1, q2)
-        P = gaussian_function_as_matrix(coord_0, coord_1, cov=2 * np.eye(2))
-        P = P / np.max(P)
-        out = out * P
     if normalize:
         return out / np.sum(out)
     return out
@@ -118,7 +111,7 @@ def build_u_gammas(M=M_gammas, N=N_gammas, angle=np.pi / 6):
     for i in range(M):
         for j in range(M):
             x = rotate_image(gammashape, i * angle)
-            u_gammas[i, j] = shift(x, shift=(0, 7 * j - int(N / 2.5)))
+            u_gammas[i, j] = shift(x, shift=(0, 3 * j - int(N / 2.5)))
     return u_gammas.clip(min=0)
 
 
