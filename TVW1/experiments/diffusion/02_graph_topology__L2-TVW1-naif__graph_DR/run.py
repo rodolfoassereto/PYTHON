@@ -163,17 +163,24 @@ record_every = 100
 
 # %% ── 5. L2 error callback ───────────────────────────────────────────────────
 
-def make_l2_error_fn(P_true, P_true_norm, N_op):
+# graph_DR no longer computes diagnostics internally; the consensus variance
+# (P_variance) and fixed-point residual (edge_residual_norm_sq) plotted below come
+# from graph_DR_diagnostics. Z varies per base graph, so the callback is rebuilt
+# inside each loop with the current Z.
+from proximal_algorithms.graph_DR_auxiliary_functions import graph_DR_diagnostics
+
+def make_metrics_fn(P_true, P_true_norm, N_op, Z):
     def fn(x_list):
         P_bar = sum(xi['P'] for xi in x_list) / N_op
-        return {'relative_L2_error': np.linalg.norm(P_bar - P_true) / P_true_norm}
+        return {'relative_L2_error': np.linalg.norm(P_bar - P_true) / P_true_norm,
+                **graph_DR_diagnostics(x_list, Z)}
     return fn
-
-extra_metrics_fn = make_l2_error_fn(ground_truth, ground_truth_norm, N)
 
 # %% ── 6. Run: one representative per λ₁ ──────────────────────────────────────
 
-from l2_tvw1_naif import model_naif_graph
+from l2_tvw1_naif import compute_C_bounds, model_naif_graph
+
+C_bounds = compute_C_bounds(shape_y, alpha1, alpha2, E)
 
 results_repr = {}
 
@@ -186,13 +193,14 @@ for lam1, bg in representatives.items():
 
     Z = bg['Z']
     graph_DR_parameters = (Z, parent_node, d)
+    extra_metrics_fn = make_metrics_fn(ground_truth, ground_truth_norm, N, Z)
 
     np.random.seed(123)
     t0 = time.time()
     x, w, history = model_naif_graph(
         E, mask_rfft, shape_x, shape_y, alpha1, alpha2,
-        graph_DR_parameters, sigma, iterations,
-        printprogress=True, return_history=True,
+        C_bounds, graph_DR_parameters, sigma, iterations,
+        printprogress=True,
         extra_metrics_fn=extra_metrics_fn, record_every=record_every,
     )
     elapsed = time.time() - t0
@@ -225,13 +233,14 @@ if RUN_ALL:
 
         Z = bg['Z']
         graph_DR_parameters = (Z, parent_node, d)
+        extra_metrics_fn = make_metrics_fn(ground_truth, ground_truth_norm, N, Z)
 
         np.random.seed(123)
         t0 = time.time()
         x, w, history = model_naif_graph(
             E, mask_rfft, shape_x, shape_y, alpha1, alpha2,
-            graph_DR_parameters, sigma, iterations,
-            printprogress=False, return_history=True,
+            C_bounds, graph_DR_parameters, sigma, iterations,
+            printprogress=False,
             extra_metrics_fn=extra_metrics_fn, record_every=record_every,
         )
         elapsed = time.time() - t0

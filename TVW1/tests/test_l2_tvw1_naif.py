@@ -42,8 +42,8 @@ import numpy as np
 from gaussians import build_gaussian_mixture
 from masks import undersampling_mask_xy
 from forward import KK_factory, KKstar_factory
-from graph_DR_auxiliary_functions import make_graph_DR_parameters
-from l2_tvw1_naif import model_naif, model_naif_graph, primal_dual_gap
+from proximal_algorithms.graph_DR_auxiliary_functions import make_graph_DR_parameters, graph_DR_diagnostics
+from l2_tvw1_naif import compute_C_bounds, model_naif, model_naif_graph
 from plottings import plot_u
 
 
@@ -70,9 +70,9 @@ SNR = 15
 ALPHA1, ALPHA2 = 0.45, 1.4
 STEPSIZE_RATIO = 0.5    # CP
 SIGMA = 0.3             # graph-DR (good value from the sigma sweep)
-IT_NAIF = 1000          # CP main run
-IT_GRAPH = 5000         # graph-DR main run
-IT_DET = 1000            # determinism check (exactness is iteration-independent)
+IT_CP = 1000          # CP main run
+IT_GRAPH = 1000         # graph-DR main run
+IT_DET = 200            # determinism check (exactness is iteration-independent)
 
 QUALITY_FACTOR = 0.85   # a "good" reconstruction has err < this * rough err
 CAUCHY_TOL = 0.12       # ||P(2T)-P(T)|| / ||P(T)||  must be below this
@@ -117,7 +117,7 @@ print(f"  rough (zero-filled adjoint) rel. L2 error = {rough_err:.4f}")
 # %% ── Test 1: model_naif (Chambolle-Pock) ────────────────────────────────────
 print("\n[model_naif / CP]")
 np.random.seed(SEED)
-P_cp = model_naif(E, mask_rfft, shape_x, shape_y, ALPHA1, ALPHA2, STEPSIZE_RATIO, IT_NAIF, printprogress=False)
+P_cp = model_naif(E, mask_rfft, shape_x, shape_y, ALPHA1, ALPHA2, STEPSIZE_RATIO, IT_CP, printprogress=False)
 plot_u(P_cp, ndim_y, title='CP')
 cp_err = rel_err(P_cp, gt)
 
@@ -127,7 +127,7 @@ check("naif: beats rough adjoint", cp_err < QUALITY_FACTOR * rough_err, f"{cp_er
 
 # convergence: Cauchy residual between T and 2T iterations should be small
 np.random.seed(SEED)
-P_cp_2T = model_naif(E, mask_rfft, shape_x, shape_y, ALPHA1, ALPHA2, STEPSIZE_RATIO, 2 * IT_NAIF, printprogress=False)
+P_cp_2T = model_naif(E, mask_rfft, shape_x, shape_y, ALPHA1, ALPHA2, STEPSIZE_RATIO, 2 * IT_CP, printprogress=False)
 cauchy = rel_err(P_cp_2T, P_cp)  # ||P(2T)-P(T)|| / ||P(T)||
 check("naif: Cauchy residual small", cauchy < CAUCHY_TOL, f"||P(2T)-P(T)||/||P(T)|| = {cauchy:.4f} < {CAUCHY_TOL}")
 
@@ -139,16 +139,21 @@ graph_params = make_graph_DR_parameters(N, [(0, 1), (1, 2), (2, 3)])
 
 # %% ── Test 2: model_naif_graph (graph Douglas-Rachford) ──────────────────────
 
-def l2_error_fn(x_list):
+Z = graph_params[0]
+def metrics_fn(x_list):
+    # L2 error vs ground truth + the graph-DR convergence diagnostics
+    # (consensus variance + fixed-point residual) that graph_DR no longer
+    # computes internally.
     P_bar = sum(xi['P'] for xi in x_list) / N
-    return {'relative_L2_error': rel_err(P_bar, gt)}
+    return {'relative_L2_error': rel_err(P_bar, gt), **graph_DR_diagnostics(x_list, Z)}
 
+C_bounds = compute_C_bounds(shape_y, ALPHA1, ALPHA2, E)
 
 np.random.seed(SEED)
-x, w, hist = model_naif_graph(E, mask_rfft, shape_x, shape_y, ALPHA1, ALPHA2,
+x, w, hist = model_naif_graph(E, mask_rfft, shape_x, shape_y, ALPHA1, ALPHA2, C_bounds,
                               graph_params, SIGMA, IT_GRAPH,
-                              printprogress=False, return_history=True,
-                              extra_metrics_fn=l2_error_fn, record_every=10)
+                              printprogress=False,
+                              extra_metrics_fn=metrics_fn, record_every=10)
 P_graph = sum(xi['P'] for xi in x) / N
 plot_u(P_graph, ndim_y, title='graph_DR')
 graph_err = rel_err(P_graph, gt)
@@ -182,11 +187,11 @@ B = model_naif(E, mask_rfft, shape_x, shape_y, ALPHA1, ALPHA2, STEPSIZE_RATIO, I
 check("naif deterministic", np.array_equal(A, B), f"max_abs_diff={np.max(np.abs(A - B)):.2e}")
 
 np.random.seed(SEED)
-xa, _, _ = model_naif_graph(E, mask_rfft, shape_x, shape_y, ALPHA1, ALPHA2, graph_params, SIGMA, IT_DET,
-                            printprogress=False, return_history=False)
+xa, _, _ = model_naif_graph(E, mask_rfft, shape_x, shape_y, ALPHA1, ALPHA2, C_bounds, graph_params, SIGMA, IT_DET,
+                            printprogress=False)
 np.random.seed(SEED)
-xb, _, _ = model_naif_graph(E, mask_rfft, shape_x, shape_y, ALPHA1, ALPHA2, graph_params, SIGMA, IT_DET,
-                            printprogress=False, return_history=False)
+xb, _, _ = model_naif_graph(E, mask_rfft, shape_x, shape_y, ALPHA1, ALPHA2, C_bounds, graph_params, SIGMA, IT_DET,
+                            printprogress=False)
 Pa = sum(xi['P'] for xi in xa) / N
 Pb = sum(xi['P'] for xi in xb) / N
 check("graph deterministic", np.array_equal(Pa, Pb), f"max_abs_diff={np.max(np.abs(Pa - Pb)):.2e}")
