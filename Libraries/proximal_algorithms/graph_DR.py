@@ -16,8 +16,8 @@ def graph_DR(sigma, Z, parent_node, d, w0, iterations, resolvents,
 
     Returns
     -------
-    (x, w, history) : history is the recorded dict, or None when no
-        `extra_metrics_fn` was given.
+    (x, w)            when no `extra_metrics_fn` is given;
+    (x, w, history)   when one is, where history is the recorded dict.
 
     Parameters
     ----------
@@ -74,4 +74,6 @@ def graph_DR(sigma, Z, parent_node, d, w0, iterations, resolvents,
             for key, val in extra_metrics_fn(x).items():
                 history.setdefault(key, []).append(val)
 
-    return x, w, history
+    if record:
+        return x, w, history
+    return x, w
