@@ -13,13 +13,15 @@ Callers must `import paths` first so those directories are on sys.path.
 """
 import numpy as np
 
-def central_Y_indices(f, shape_x, shape_y): # returns the indices of the Y-centers; f is only needed for its shape actually
+def central_Y_indices(shape_f, shape_x, shape_y): # returns the indices of the Y-centers; f is only needed for its shape actually
     ndim_x, ndim_y = len(shape_x), len(shape_y)
-    ndim_0 = f.ndim - ndim_x - ndim_y
+    ndim_0 = len(shape_f) - ndim_x - ndim_y
     assert ndim_0 >= 0
     return (slice(None),)*(ndim_0+ndim_x) + tuple( np.array(shape_y) // 2 )
 
 def model_naif(E, mask_rfft, shape_x, shape_y, alpha1, alpha2, stepsize_ratio, iterations, printprogress=True):
+
+    '''This should be renamed model_naif_CP and it does not solve the same problem as model_naif_graph actually (for example, no P>=0 constraint)'''
 
     from operators import II, IIstar, JJ, JJstar
     from forward import KK_factory, KKstar_factory
@@ -40,14 +42,6 @@ def model_naif(E, mask_rfft, shape_x, shape_y, alpha1, alpha2, stepsize_ratio, i
     shape_l = E.shape
     l0 = rd(*shape_l) + 1j * rd(*shape_l)
 
-    def set_center_Y_to_zero(f, ndim_x, ndim_y, shape_y):
-        assert ndim_y <= f.ndim - ndim_x
-        ndim_0 = f.ndim - ndim_x - ndim_y
-        f1 = f.copy()
-        ind = (slice(None),)*(ndim_0+ndim_x) + tuple( np.array(shape_y) // 2 )
-        f1[ind] = 0
-        return f1
-
     assert np.fft.rfftn(P0).shape == mask_rfft.shape and np.sum(mask_rfft) == E.size
 
     x0 = {'P': P0, 'Q': Q0}
@@ -56,16 +50,27 @@ def model_naif(E, mask_rfft, shape_x, shape_y, alpha1, alpha2, stepsize_ratio, i
     KK = KK_factory(mask_rfft)
     KKstar = KKstar_factory(mask_rfft)
 
-    prox_f = lambda x, tau: {'P': x['P'].clip(min=0),
-                             'Q': prox_norm21(x['Q'], tau * alpha1, 0)}
-    prox_gstar = lambda u, sigma: {'f': set_center_Y_to_zero(u['f'], ndim_x, ndim_y, shape_y),
-                                   'g': proj_L_infty_ball(u['g'], alpha2),
-                                   'l': (u['l'] - sigma * E) / (1 + sigma)}
-    L = lambda x: {'f': nabla_x(JJ(x['P'], shape_x, shape_y), dim=ndim_x) + div_y(x['Q']),
-                   'g': nabla_x(II(x['P'], shape_x, shape_y), dim=ndim_x),
-                   'l': KK(x['P'])}
-    Lstar = lambda u: {'P': -JJstar(div_x(u['f']), shape_x, shape_y) - IIstar(div_x(u['g']), shape_y) + KKstar(u['l']),
-                       'Q': -nabla_y(u['f'], dim=ndim_y)}
+    def prox_f(x, tau):
+        return {'P': x['P'].clip(min=0),
+                'Q': prox_norm21(x['Q'], tau * alpha1, 0)}
+
+    ind = central_Y_indices(f0.shape, shape_x, shape_y)
+
+    def prox_gstar(u, sigma):
+        f = u['f'].copy()
+        f[ind] = 0
+        return {'f': f,
+                'g': proj_L_infty_ball(u['g'], alpha2),
+                'l': (u['l'] - sigma * E) / (1 + sigma)}
+
+    def L(x):
+        return {'f': nabla_x(JJ(x['P'], shape_x, shape_y), dim=ndim_x) + div_y(x['Q']),
+                'g': nabla_x(II(x['P'], shape_x, shape_y), dim=ndim_x),
+                'l': KK(x['P'])}
+
+    def Lstar(u):
+        return {'P': -JJstar(div_x(u['f']), shape_x, shape_y) - IIstar(div_x(u['g']), shape_y) + KKstar(u['l']),
+                'Q': -nabla_y(u['f'], dim=ndim_y)}
 
     size_y = np.prod(shape_y)
     L_norm_sq = 4 * ndim_x + np.sqrt(size_y) * 4 * ndim_x + 1 + 4 * ndim_y
@@ -77,21 +82,22 @@ def model_naif(E, mask_rfft, shape_x, shape_y, alpha1, alpha2, stepsize_ratio, i
     return x['P']
 
 
-def model_naif_graph(E, mask_rfft, shape_x, shape_y, alpha1, alpha2, C_P, C_Q, C_f, graph_DR_parameters, sigma, iterations,
-                     printprogress=True, return_history=False, extra_metrics_fn=None, record_every=1):
+def model_naif_graph(E, mask_rfft, shape_x, shape_y, alpha1, alpha2, C_bounds, graph_DR_parameters, sigma, iterations,
+                     printprogress=True, extra_metrics_fn=None, record_every=1):
     """Same model, solved by graph Douglas-Rachford.
 
     graph_DR_parameters = (Z, parent_node, d); build it with core/graph_DR_auxiliary_functions.py.
     """
+    C_P, C_Q, C_f = C_bounds
     Z, parent_node, d = graph_DR_parameters
 
+    from prox_and_proj import prox_norm21
     from operators import II, IIstar, JJ, PP
     from forward import KK_factory, KKstar_factory
     from differential_operators import nabla_x, nabla_y, div_x, div_y
     from solve_linear_systems import (laplacian_eigenvalues, resolvent_with_laplacian,
                                       resolvent_with_II, resolvent_with_JJ,
                                       resolvent_with_undersampling_withmask)
-    from prox_and_proj import prox_norm21, proj_L_infty_ball
     from proximal_algorithms.graph_DR import graph_DR
     from numpy.random import rand as rd
 
@@ -115,11 +121,12 @@ def model_naif_graph(E, mask_rfft, shape_x, shape_y, alpha1, alpha2, C_P, C_Q, C
     def prox_F2(Q, lam):
         return prox_norm21(Q, lam * alpha1, 0)
 
+    ind = central_Y_indices(f0.shape, shape_x, shape_y)
+
     def J_0(z, lam):
         P = prox_F1(z['P'], lam)
         Q = prox_F2(z['Q'], lam)
         f = z['f'].copy()
-        ind = central_Y_indices(f, shape_x, shape_y)
         f[ind] = 0
         f = f.clip(max=C_f)
         g = z['g'].clip(-alpha2, alpha2)
@@ -166,13 +173,8 @@ def model_naif_graph(E, mask_rfft, shape_x, shape_y, alpha1, alpha2, C_P, C_Q, C
 
     w0 = [{'P': np.zeros(shape_xy), 'Q': np.zeros(shape_Q), 'f': np.zeros(shape_f), 'g': np.zeros(shape_g), 'h':E} for _ in range(N - 1)]
 
-    result = graph_DR(sigma, Z, parent_node, d, w0, iterations, resolvents, printprogress=printprogress,
-                      return_history=return_history, extra_metrics_fn=extra_metrics_fn, record_every=record_every)
-    if return_history:
-        x, w, history = result
-    else:
-        x, w = result
-        history = None
+    x, w, history = graph_DR(sigma, Z, parent_node, d, w0, iterations, resolvents, printprogress=printprogress,
+                             extra_metrics_fn=extra_metrics_fn, record_every=record_every)
 
     return x, w, history
 
@@ -186,9 +188,10 @@ def phi_surrogate(t, M):
 def phi_surrogate_conjugate(s, M): # convex conjugate of phi_surrogate: (1/2) M (s^2 - 1)_+
     return 0.5 * M * max(s**2 - 1, 0.0)
 
-def primal(P, Q, E, KK, C_Q, C_f, alpha_1, alpha_2, shape_x, shape_y):
+def primal(P, Q, E, KK, C_bounds, alpha_1, alpha_2, shape_x, shape_y):
     from differential_operators import nabla_x, div_y
     from operators import II, JJ
+    C_P, C_Q, C_f = C_bounds
     ndim_x = len(shape_x)
 
     argument = nabla_x( JJ(P, shape_x, shape_y), dim=ndim_x ) + div_y(Q)
@@ -202,9 +205,10 @@ def primal(P, Q, E, KK, C_Q, C_f, alpha_1, alpha_2, shape_x, shape_y):
 
     return add_1 + add_2 + add_3 + add_4
 
-def dual(f, g, h, E, C_P, C_Q, alpha_1, shape_x, shape_y, KKstar):
+def dual(f, g, h, E, C_bounds, alpha_1, shape_x, shape_y, KKstar):
     from differential_operators import nabla_y, div_x
     from operators import JJ, IIstar
+    C_P, C_Q, C_f = C_bounds
     ndim_y = len(shape_y)
 
     xi = JJ(div_x(f), shape_x, shape_y) + IIstar(div_x(g), shape_y) - KKstar(h)
@@ -216,21 +220,29 @@ def dual(f, g, h, E, C_P, C_Q, alpha_1, shape_x, shape_y, KKstar):
 
     return add_1 + add_2 + add_3
 
-def primal_dual_gap(P, Q, f, g, h, E, KK, KKstar, C_P, C_Q, C_f, alpha_1, alpha_2, shape_x, shape_y):
+def primal_dual_gap(P, Q, f, g, h, E, KK, KKstar, C_bounds, alpha_1, alpha_2, shape_x, shape_y):
     # project P and f onto the surrogate's feasible boxes so the dropped indicator
     # terms vanish (g already lies in its box from the solver).
     # P must be projected onto the *box* {0 <= P <= C_P} -- the set whose support
     # function C_P ||(.)_+||_1 is exactly the dual term in dual(); the solver's J_3
     # also clips P to this same box. (A simplex projection, forcing sum(P)=C_P, is
     # inconsistent with both and makes the gap plateau far from zero.)
+    C_P, C_Q, C_f = C_bounds
     P = P.clip(0, C_P)
     f = f.clip(min=-C_f, max=C_f)
     f[central_Y_indices(f, shape_x, shape_y)] = 0
     h = KK(P) - E
 
-    p = primal(P, Q, E, KK, C_Q, C_f, alpha_1, alpha_2, shape_x, shape_y)
-    d = dual(f, g, h, E, C_P, C_Q, alpha_1, shape_x, shape_y, KKstar)
+    p = primal(P, Q, E, KK, C_bounds, alpha_1, alpha_2, shape_x, shape_y)
+    d = dual(f, g, h, E, C_bounds, alpha_1, shape_x, shape_y, KKstar)
     return p + d
+
+def compute_C_bounds(shape_y, alpha_1, alpha_2, E):
+    E_norm = np.linalg.norm(E)
+    C_P = 2 * E_norm         # bound on ||P*||_inf
+    C_Q = E_norm ** 2 / (2 * alpha_1)           # bound on ||Q*||_{2,1}
+    C_f = alpha_1 * np.floor( max(shape_y)+1 )/2 * (1 + np.sqrt(2) / 2)   # bound on ||f*||_inf
+    return (C_P, C_Q, C_f)
 
 def objective_l2_tvw1_naif(P, shape_x, shape_y, alpha_1, alpha_2, KK, E):
     from operators import JJ, II
