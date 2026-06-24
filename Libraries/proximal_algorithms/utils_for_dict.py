@@ -52,4 +52,6 @@ def scalar_multiply_dict(dict0, scalar):
     return {key: scalar * value for key, value in dict0.items()}
 
 def inner_product_dicts(dict1, dict2): # useful to verify that the adjoint operator is correctly defined
-    return np.sum( [ np.dot( dict1[key].flatten(), dict2[key].flatten() ) for key in dict1 ] )
+    # np.vdot conjugates its first argument, so this is a genuine (Hermitian) inner
+    # product for complex entries too
+    return np.sum( [ np.vdot( dict1[key].flatten(), dict2[key].flatten() ) for key in dict1 ] )
