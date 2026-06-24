@@ -54,7 +54,7 @@ def make_graph_DR_parameters(N, E_base, E_state=None):
     return Z, parent_node, d
 
 
-# ---- Convergence diagnostics (opt-in; pass as graph_DR's extra_metrics_fn) ----
+# %% Convergence diagnostics (opt-in; pass as graph_DR's extra_metrics_fn) ----
 def graph_DR_diagnostics(x, Z, variance_key='P'):
     """Consensus variance of one state component + squared fixed-point residual.
 
@@ -77,14 +77,11 @@ def graph_DR_diagnostics(x, Z, variance_key='P'):
     for j in range(Z.shape[1]):
         rj = add_dicts(*x, weights=Z[:, j])
         edge_res_sq += inner_product_dicts(rj, rj)
-    # <rj,rj> is real by construction; drop the (zero) imaginary part numpy keeps
-    # around because the state has a complex component (h = KK(P)-E).
-    edge_res_sq = float(np.real(edge_res_sq))
 
     return {f'{variance_key}_variance': var, 'edge_residual_norm_sq': edge_res_sq}
 
 
-# ---- Topology enumeration (lambda_1 study) ----
+# %% Topology enumeration (lambda_1 study) ----
 def is_connected(N, edges):
     if not edges:
         return N <= 1
