@@ -194,7 +194,7 @@ sigma = 1.0
 theta = 1.0
 iters_graph_dr = 500
 
-x_nodes = graph_DR(sigma, Z, parent_node, d, w0, iters_graph_dr, [prox1, prox2, prox3], theta=theta)
+x_nodes, _w = graph_DR(sigma, Z, parent_node, d, w0, iters_graph_dr, [prox1, prox2, prox3], theta=theta)
 xs = np.stack([xi["x"] for xi in x_nodes], axis=0)
 x_graph = xs.mean(axis=0)   # take mean for stability
 
