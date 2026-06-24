@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 from masks import undersampling_mask_xy
 from forward import KK_factory, KKstar_factory
 from graph_DR_auxiliary_functions import make_graph_DR_parameters
-from l2_tvw1_naif import model_naif, model_naif_graph, primal_dual_gap
+from l2_tvw1_naif import compute_C_bounds, model_naif, model_naif_graph, primal_dual_gap
 from plottings import plot_u
 
 
@@ -68,10 +68,7 @@ print(f"\nProblem: shape_x={shape_x}, shape_y={shape_y}, retained={RETAINED}, SN
 # %% ── Test: objective function throughout graph-DR
 
 print("\n[objective function]")
-E_norm = np.linalg.norm(E)
-C_Q = E_norm ** 2 / (2 * ALPHA1)           # bound on ||Q*||_{2,1}
-C_P = 2 * E_norm         # bound on ||P*||_inf
-C_f = ALPHA1 * np.floor( max(shape_y)+1 )/2 * (1 + np.sqrt(2) / 2)   # bound on ||f*||_inf
+C_bounds = compute_C_bounds(shape_y, ALPHA1, ALPHA2, E)
 
 from l2_tvw1_naif import objective_l2_tvw1_naif
 
@@ -81,9 +78,9 @@ def objective_fn(x_list):
     return {'objective': objective_l2_tvw1_naif(P, shape_x, shape_y, ALPHA1, ALPHA2, KK, E)}
 
 np.random.seed(SEED)
-x, _, hist_objective = model_naif_graph(E, mask_rfft, shape_x, shape_y, ALPHA1, ALPHA2, C_P, C_Q, C_f,
+x, _, hist_objective = model_naif_graph(E, mask_rfft, shape_x, shape_y, ALPHA1, ALPHA2, C_bounds,
                                   graph_params, SIGMA, IT_GRAPH,
-                                  printprogress=True, return_history=True,
+                                  printprogress=True,
                                   extra_metrics_fn=objective_fn, record_every=RECORD)
 
 P_graph = sum(xi['P'] for xi in x) / N

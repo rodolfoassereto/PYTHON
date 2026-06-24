@@ -111,18 +111,25 @@ record_every = 10
 sigma_values = [0.02]
 
 # %% ── 5. Extra metrics callback ───────────────────────────────────────────────
-def make_l2_error_fn(P_true, P_true_norm, N_operators):
-    """Returns x_list -> dict computing relative L2 error of the consensus P."""
+# graph_DR no longer computes diagnostics internally; the consensus variance
+# (P_variance) and fixed-point residual (edge_residual_norm_sq) used in the plots
+# below come from graph_DR_diagnostics, recorded via extra_metrics_fn.
+from proximal_algorithms.graph_DR_auxiliary_functions import graph_DR_diagnostics
+
+def make_metrics_fn(P_true, P_true_norm, N_operators, Z):
+    """Returns x_list -> {relative_L2_error, P_variance, edge_residual_norm_sq}."""
     def fn(x_list):
         P_bar = sum(xi['P'] for xi in x_list) / N_operators
         err = np.linalg.norm(P_bar - P_true) / P_true_norm
-        return {'relative_L2_error': err}
+        return {'relative_L2_error': err, **graph_DR_diagnostics(x_list, Z)}
     return fn
 
-extra_metrics_fn = make_l2_error_fn(ground_truth, ground_truth_norm, N)
+extra_metrics_fn = make_metrics_fn(ground_truth, ground_truth_norm, N, Z)
 
 # %% ── 6. Run experiments ──────────────────────────────────────────────────────
-from l2_tvw1_naif import model_naif_graph
+from l2_tvw1_naif import compute_C_bounds, model_naif_graph
+
+C_bounds = compute_C_bounds(shape_y, alpha1, alpha2, E)
 
 results = {}
 
@@ -137,9 +144,8 @@ for sigma in sigma_values:
     t0 = time.time()
     x, w, history = model_naif_graph(
         E, mask_rfft, shape_x, shape_y, alpha1, alpha2,
-        graph_DR_parameters, sigma, iterations,
+        C_bounds, graph_DR_parameters, sigma, iterations,
         printprogress=True,
-        return_history=True,
         extra_metrics_fn=extra_metrics_fn,
         record_every=record_every,
     )

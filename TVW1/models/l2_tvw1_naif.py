@@ -173,8 +173,13 @@ def model_naif_graph(E, mask_rfft, shape_x, shape_y, alpha1, alpha2, C_bounds, g
 
     w0 = [{'P': np.zeros(shape_xy), 'Q': np.zeros(shape_Q), 'f': np.zeros(shape_f), 'g': np.zeros(shape_g), 'h':E} for _ in range(N - 1)]
 
-    x, w, history = graph_DR(sigma, Z, parent_node, d, w0, iterations, resolvents, printprogress=printprogress,
-                             extra_metrics_fn=extra_metrics_fn, record_every=record_every)
+    result = graph_DR(sigma, Z, parent_node, d, w0, iterations, resolvents, printprogress=printprogress,
+                      extra_metrics_fn=extra_metrics_fn, record_every=record_every)
+    if extra_metrics_fn is not None:
+        x, w, history = result
+    else:
+        x, w = result
+        history = None
 
     return x, w, history
 

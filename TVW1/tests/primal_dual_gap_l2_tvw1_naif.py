@@ -1,5 +1,6 @@
 # %% ── bootstrap ──────────────────────────────────────────────────────────────
 
+from models.l2_tvw1_naif import compute_C_bounds
 import sys
 from pathlib import Path
 sys.path.insert(0, str(next(p for p in [Path.cwd(), *Path.cwd().parents] if (p / "TVW1").is_dir()) / "TVW1"))
@@ -12,7 +13,7 @@ from gaussians import build_gaussian_mixture
 from masks import undersampling_mask_xy
 from forward import KK_factory, KKstar_factory
 from graph_DR_auxiliary_functions import make_graph_DR_parameters
-from l2_tvw1_naif import model_naif, model_naif_graph, primal_dual_gap
+from l2_tvw1_naif import compute_C_bounds, model_naif_graph, primal_dual_gap
 from plottings import plot_u
 
 
@@ -26,6 +27,7 @@ ALPHA1, ALPHA2 = 0.01, 0.0001
 STEPSIZE_RATIO = 0.5    # CP
 SIGMA = 0.3             # (good value from the sigma sweep)
 IT_GRAPH = 300000         # iterations
+RECORD = 50      
 
 N = 4
 graph_params = make_graph_DR_parameters(N, [(0, 1), (1, 2), (2, 3)])
@@ -68,12 +70,9 @@ print(f"\nProblem: shape_x={shape_x}, shape_y={shape_y}, retained={RETAINED}, SN
 
 # %% ── Test: surrogate primal-dual gap throughout graph-DR
 
+C_bounds = compute_C_bounds(shape_y, ALPHA1, ALPHA2, E)
+
 print("\n[surrogate primal-dual gap]")
-E_norm = np.linalg.norm(E)
-C_Q = E_norm ** 2 / (2 * ALPHA1)           # bound on ||Q*||_{2,1}
-C_P = 2 * E_norm         # bound on ||P*||_inf
-C_f = ALPHA1 * np.floor( max(shape_y)+1 )/2 * (1 + np.sqrt(2) / 2)   # bound on ||f*||_inf
-RECORD = 50
 
 def gap_fn(x_list):
     n = len(x_list)
@@ -82,12 +81,12 @@ def gap_fn(x_list):
     f = sum(xi['f'] for xi in x_list) / n
     g = sum(xi['g'] for xi in x_list) / n
     h = sum(xi['h'] for xi in x_list) / n
-    return {'gap': primal_dual_gap(P, Q, f, g, h, E, KK, KKstar, C_P, C_Q, C_f, ALPHA1, ALPHA2, shape_x, shape_y)}
+    return {'gap': primal_dual_gap(P, Q, f, g, h, E, KK, KKstar, C_bounds, ALPHA1, ALPHA2, shape_x, shape_y)}
 
 np.random.seed(SEED)
-x, _, hist_gap = model_naif_graph(E, mask_rfft, shape_x, shape_y, ALPHA1, ALPHA2, C_P, C_Q, C_f,
+x, _, hist_gap = model_naif_graph(E, mask_rfft, shape_x, shape_y, ALPHA1, ALPHA2, C_bounds,
                                   graph_params, SIGMA, IT_GRAPH,
-                                  printprogress=True, return_history=True,
+                                  printprogress=True,
                                   extra_metrics_fn=gap_fn, record_every=RECORD)
 
 P_graph = sum(xi['P'] for xi in x) / N
