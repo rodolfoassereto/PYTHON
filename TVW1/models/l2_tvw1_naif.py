@@ -200,7 +200,7 @@ def primal(P, Q, E, KK, C_bounds, alpha_1, alpha_2, shape_x, shape_y):
     ndim_x = len(shape_x)
 
     argument = nabla_x( JJ(P, shape_x, shape_y), dim=ndim_x ) + div_y(Q)
-    ind = central_Y_indices( argument, shape_x, shape_y )
+    ind = central_Y_indices( argument.shape, shape_x, shape_y )
     argument[ind] = 0 # summing the not-Y-central indices is equivalent to summing all but setting the centers to zero
 
     add_1 = 0.5 * np.sum( np.abs( KK(P)-E )**2 )
@@ -235,7 +235,8 @@ def primal_dual_gap(P, Q, f, g, h, E, KK, KKstar, C_bounds, alpha_1, alpha_2, sh
     C_P, C_Q, C_f = C_bounds
     P = P.clip(0, C_P)
     f = f.clip(min=-C_f, max=C_f)
-    f[central_Y_indices(f, shape_x, shape_y)] = 0
+    ind = central_Y_indices(f.shape, shape_x, shape_y)
+    f[ind] = 0
     h = KK(P) - E
 
     p = primal(P, Q, E, KK, C_bounds, alpha_1, alpha_2, shape_x, shape_y)
