@@ -50,9 +50,10 @@ def graph_DR(sigma, Z, parent_node, d, w0, iterations, resolvents,
 
         current_time = time.time()
         if (current_time >= next_update) and printprogress:
-            print(f"Progress: ~{int(100 * k / iterations)}% ({k}/{iterations}),  Time elapsed: "
-                  f"~{int((current_time - start_time) / 60)} min")
-            next_update = current_time + 60
+            print(f"Progress: ~{int(100 * k / iterations)}% ({k}/{iterations}),  Time elapsed:\
+~{int((current_time - start_time) / 60)} min,  Time left:\
+~{int((current_time - start_time) / 60 * (iterations - k) / k)} min")
+            next_update = current_time + 60  # Schedule next update
 
         for i in range(N):
             J_lam = resolvents[i]
