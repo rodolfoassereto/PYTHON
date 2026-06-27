@@ -1,3 +1,5 @@
+# %% Define create_2d_ring and rotate_2d_image
+
 import sys
 from pathlib import Path
 sys.path.insert(0, str(next(p for p in [Path.cwd(), *Path.cwd().parents] if (p / "TVW1").is_dir()) / "TVW1"))
@@ -6,7 +8,7 @@ import paths  # noqa: F401
 import numpy as np
 import matplotlib.pyplot as plt
 np.random.seed(0)  # reproducibility (random voxel rotations + image noise)
-from plottings import plot_u, plot_u_light  # noqa: E402
+from plottings import plot_u  # noqa: E402
 
 
 def create_2d_ring(shape_y, plotit=False):
@@ -65,7 +67,7 @@ def rotate_2d_image(img, phi):
     return rotated
 
 from w1_tvw1 import model_W1_TVW1
-# %%
+# %% Build & plot gaussian_mixture
 
 from gaussians import build_gaussian_mixture
 shape_x, shape_y = (7, 8), (19, 20)
@@ -78,7 +80,7 @@ for idx in np.ndindex(shape_x):
      u_input[idx] = gaussian_mixture[idx] / np.sum( gaussian_mixture[idx] )
 plot_u(u_input, ndim_y, title="gaussian_mixture")
 
-# %% "4d ring" experiment
+# %% "4d ring" experiment (W1-TVW1 with CP)
 
 shape_ring_y = (64,64)
 ndim_ring_y = len(shape_ring_y)
@@ -97,7 +99,7 @@ plot_u(ring_4d, shape_ring_y)
 ring_4d_reg = model_W1_TVW1(ring_4d, shape_ring_x, shape_ring_y, 1, 3000)
 plot_u(ring_4d_reg, ndim_ring_y)
 
-# %% "4d bar" experiment
+# %% "4d bar" experiment  (W1-TVW1 with CP)
 
 shape_bar_y = (16,16)
 ndim_bar_y = len(shape_bar_y)
@@ -120,13 +122,13 @@ initial_phis[half_x0:,half_x1:] = np.pi/4
 bar_4d = np.zeros( shape_bar_xy )
 for idx in np.ndindex(shape_bar_x):
     r = np.random.rand() - 0.5
-    phi = initial_phis[idx] + np.pi * r * 0.1 * 0
+    phi = initial_phis[idx] + np.pi * r * 0.1
     rotated_temp = rotate_2d_image( bar, phi )
     bar_4d[idx] = rotated_temp / np.sum(rotated_temp)
-plot_u(bar_4d, shape_bar_y)
+plot_u(bar_4d, shape_bar_y, title=f"Bars with noise on the angle")
 
 bar_4d_reg = model_W1_TVW1(bar_4d, shape_bar_x, shape_bar_y, 1, 3000)
-plot_u(bar_4d_reg, ndim_bar_y)
+plot_u(bar_4d_reg, ndim_bar_y, title=f"Bars denoised with W1-TVW1")
 
 # %%
 
@@ -146,7 +148,7 @@ def normalize_pixel_values(img, max_value):
     img_scaled : numpy.ndarray
         Image with integer values in [0, max_value]
     """
-    # Normalize to [0, 1] range
+    # Spot min and max values
     img_min = np.min(img)
     img_max = np.max(img)
     
@@ -156,7 +158,6 @@ def normalize_pixel_values(img, max_value):
     
     # Scale to [0, 1]
     img_normalized = (img - img_min) / (img_max - img_min)
-    
     # Scale to [0, max_value] and convert to integer
     img_scaled = np.round(img_normalized * max_value).astype(int)
     
