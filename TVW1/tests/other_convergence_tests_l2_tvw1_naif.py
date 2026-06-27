@@ -39,12 +39,12 @@ import paths  # noqa: F401
 
 import numpy as np
 
-from gaussians import build_gaussian_mixture
-from masks import undersampling_mask_xy
-from forward import KK_factory, KKstar_factory
-from proximal_algorithms.graph_DR_auxiliary_functions import make_graph_DR_parameters, graph_DR_diagnostics
-from l2_tvw1_naif import compute_C_bounds, model_naif, model_naif_graph
-from plottings import plot_u
+from gaussians import build_gaussian_mixture  # ty:ignore[unresolved-import]
+from masks import undersampling_mask_xy  # ty:ignore[unresolved-import]
+from forward import KK_factory, KKstar_factory  # ty:ignore[unresolved-import]
+from proximal_algorithms.graph_DR_auxiliary_functions import make_graph_DR_parameters, graph_DR_diagnostics  # ty:ignore[unresolved-import]
+from l2_tvw1_naif import compute_C_bounds, model_naif, model_naif_graph  # ty:ignore[unresolved-import]
+from plottings import plot_u  # ty:ignore[unresolved-import]
 
 
 # ── tiny test harness ─────────────────────────────────────────────────────────
