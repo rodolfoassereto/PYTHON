@@ -17,8 +17,7 @@ TVW1/
 ├── core/               TVW1-specific shared building blocks
 │   ├── operators.py        II, JJ, PP  (per-voxel mass / zero-mean projections)
 │   ├── forward.py          KK_factory (undersampled rFFT) + KK (masked full FFT, legacy)
-│   ├── metrics.py          voxelwise W1/W2 (POT), W1_naif, build_cost_matrix
-│   └── graph_DR_auxiliary_functions.py           graph-DR topology: (Z, parent_node, d), λ₁ enumeration
+│   └── metrics.py          voxelwise W1/W2 (POT), W1_naif, build_cost_matrix
 ├── models/             the variational models (see table below)
 ├── data/               test-data generators (side-effect-free)
 │   ├── gaussians.py        crossing-fibre mixtures (+ covariance helpers)
@@ -28,8 +27,8 @@ TVW1/
 │   ├── diffusion/          the active line (00/01/02, each with results/)
 │   ├── behavior/           "what does W1-TV do" demos (each with results/)
 │   └── archive/            non-reproducible material (see below)
-├── tests/                  test_l2_tvw1_naif.py (CP + graph-DR correctness)
-└── Markdowns/              notes and write-ups in Markdown (see below)
+├── tests/                  correctness suite + exploratory gap script (see below)
+└── markdowns/              notes and write-ups in Markdown (see below)
 ```
 
 Top-level `Libraries/` (outside TVW1) stays the general, cross-project toolbox:
@@ -40,11 +39,12 @@ package containing the solvers:
 ```
 proximal_algorithms/
 ├── __init__.py
-├── CP.py            — Chambolle-Pock
-├── DR.py            — Douglas-Rachford
-├── pDR.py           — preconditioned Douglas-Rachford (Richardson)
-├── graph_DR.py      — graph Douglas-Rachford (Bredies, Chenchene & Naldi 2022)
-└── utils_for_dict.py — add_dicts, subtract_dicts, scalar_multiply_dict, inner_product_dicts
+├── CP.py                          — Chambolle-Pock
+├── DR.py                          — Douglas-Rachford
+├── pDR.py                         — preconditioned Douglas-Rachford (Richardson)
+├── graph_DR.py                    — graph Douglas-Rachford (Bredies, Chenchene & Naldi 2022)
+├── graph_DR_auxiliary_functions.py — topology helpers: (Z, parent_node, d), λ₁ enumeration, graph_DR_diagnostics
+└── utils_for_dict.py              — add_dicts, subtract_dicts, scalar_multiply_dict, inner_product_dicts
 ```
 
 ## Running things
@@ -63,7 +63,7 @@ import paths  # noqa: F401  — wires Libraries + core + models + data
 After that, flat imports resolve from anywhere:
 `from gaussians import build_gaussian_mixture`,
 `from l2_tvw1_naif import model_naif`,
-`from algorithms_general import CP`.
+`from proximal_algorithms.CP import CP`.
 Experiments are written as Spyder / VS Code `# %%` cell scripts; run them
 cell-by-cell, or as a whole file.
 
@@ -116,24 +116,58 @@ removed. Add it back here if/when real diffusion data is wired in.
 
 ## Tests
 
-`tests/test_l2_tvw1_naif.py` checks both solvers of the L2-TVW1 naif model on the
-seeded gaussian-mixture toy: output is finite / non-negative, the regularized
-reconstruction beats the zero-filled adjoint, the CP Cauchy residual is small,
-graph-DR consensus/feasibility/error diagnostics decrease, CP and graph-DR agree
-in quality, both are bit-deterministic per seed, and the surrogate primal–dual gap
-(see `Markdowns/Notes on the primal-dual gap computation.md`) decreases along the
-graph-DR iterates. Run it as a script (exits non-zero on failure) or cell-by-cell.
+`tests/test_l2_tvw1_naif.py` — automated correctness suite for `models/l2_tvw1_naif.py`,
+seeded gaussian-mixture toy (`shape_x=(6,6)`, `shape_y=(22,22)`, RETAINED=0.2, SNR=15).
+Four check groups:
 
-## Markdowns (`Markdowns/`)
+- **CP (`model_naif`)** output is finite and non-negative; rel-L2 error beats the
+  zero-filled adjoint by factor 0.85; Cauchy residual `‖P(2T)−P(T)‖/‖P(T)‖ < 0.12`.
+- **graph-DR (`model_naif_graph`)** return type, shape, finiteness; beats rough
+  adjoint; P-variance, edge-residual norm², and rel-L2 error all decrease.
+- **Cross-solver agreement** — `|err_CP − err_graph| < 0.15` in relative-L2 units.
+- **Determinism** — same global seed → bit-identical output for both solvers.
 
-- `TV_Wasserstein_for_Diffusion.md` — the project write-up: motivation, the
+Run as a script (exits non-zero on failure) or cell-by-cell. The surrogate bounds
+are built once via `compute_C_bounds(shape_y, alpha1, alpha2, E)` (returns the tuple
+`C_bounds = (C_P, C_Q, C_f)`) and passed to `model_naif_graph`; the graph-DR
+diagnostics (`P_variance`, `edge_residual_norm_sq`) are recorded by passing
+`graph_DR_diagnostics` through `extra_metrics_fn`.
+
+`tests/primal_dual_gap_l2_tvw1_naif.py` and `tests/objective_function_l2_tvw1_naif.py`
+— separate exploratory scripts (not part of the automated suite) that plot the
+surrogate primal–dual gap / the objective along the graph-DR iterates, using the
+same `compute_C_bounds` / `C_bounds` API.
+
+## Markdowns (`markdowns/`)
+
+- `1a - TVW1 naif for diffusion.md` — the project write-up: motivation, the
   anisotropic-W1-TV model for EAP reconstruction, and results/figures.
-- `Notes on the primal-dual gap computation.md` — exact primal / dual /
-  saddle-point formulation of the L2-TVW1-naif model, and the *surrogate*
-  functions (reverse-Huber `φ_M`) that replace the two divergent indicator terms
-  so the primal–dual gap is finite and usable as a stopping criterion.
-- `Graph_DR.md` / `Graph_DR_trimmed.md` — the graph Douglas–Rachford method
-  underlying `model_naif_graph` and the λ₁ topology study.
-- `computations_for_graph_DR_0.md` — resolvent derivations for the graph-DR blocks.
-- `contiene spiegaz del perché il primal-dual gap è infinito.md` — explanation of
-  why the raw primal–dual gap diverges and the motivation for the surrogate.
+- `1b - Primal-dual gap computation.md` — exact primal / dual / saddle-point
+  formulation of the L2-TVW1-naif model; why the raw gap is infinite at the
+  iterates (three indicator blow-ups); and the *surrogate* construction
+  (reverse-Huber `φ_M`) that replaces them.
+- `1c - Surrogate problem.md` — full derivation of the surrogate primal and dual,
+  bounds on `C_P`, `C_Q`, `C_f`, and the conjugate of `φ_M`.
+- `2a - Graph_DR_short.md` — concise summary of the graph Douglas–Rachford method
+  and the λ₁ topology study.
+- `2b - graphDR for TVW1 naif.md` — optimality system, four-block splitting, and
+  resolvent derivations for each block; linear-system inversions for the
+  `𝕀`/`𝕁` resolvents and the fidelity prox.
+
+## Known issues (`models/l2_tvw1_naif.py`)
+
+**Fixed:**
+- `primal_dual_gap`: P was projected with `proj_simplex(P, lam=C_P)`, forcing
+  `sum(P) = C_P` (~60) while the true mass is ~1750.  This made the gap plateau at
+  ~10⁵ instead of converging.  Fix: `P = P.clip(0, C_P)` (the box that matches the
+  dual term `C_P ‖ξ₊‖₁` and the `J_3` clip in the solver).
+
+**Open:**
+- **CP `g`-update** (`model_naif`, line 62): `proj_L_infty_ball(u['g'] / alpha2)`
+  clips `g` to the *unit* ball instead of the α₂-ball, and divides by zero when
+  `alpha2=0`.  Fix: `proj_L_infty_ball(u['g'], alpha2)`.
+- **`dual()` divides by `alpha_1`** (line 211): `s = … / alpha_1` is `NaN` when
+  `alpha1=0`; the whole `phi_surrogate_conjugate` term should be skipped in that case.
+- **`J_0` no-op clip** (line 125): `f.clip(max=C_f)` discards its return value, so
+  the upper bound on `f` is never enforced by the solver (only by the gap's own
+  re-clipping).  Fix: `f = f.clip(-C_f, C_f)`.
