@@ -25,12 +25,3 @@ def KKstar_factory(mask_rfft):
         full_array[mask_rfft] = E
         return np.fft.irfftn(full_array, norm='ortho')
     return KKstar
-
-
-# ---- Masked full FFT (legacy, L2-TVPR family) ----
-def KK(P, mask=None):
-    return np.ma.masked_array(np.fft.fftn(P, norm='ortho'), mask=mask)
-
-
-def KKstar(E):
-    return np.fft.ifftn(np.ma.filled(E, fill_value=0), norm='ortho')
