@@ -10,7 +10,7 @@ def plot_u(u, ndim_y, title=None, save=False, name='newname.jpg', return_fig=Fal
     stay clearly visible regardless of image content or the vmin/vmax range.
 
     Parameters:
-    - u: 4D numpy array of shape (M1, M2, N1, N2)
+    - u: numpy array of shape shape_x + shape_y with ndim_x = 1 or 2, ndim_y = 1 or 2 or 3
     - ndim_y: dimensionality of each cell. If 3, defers to plot_u_3d.
     - title: Plot title
     - save: Whether to save the figure
@@ -26,10 +26,20 @@ def plot_u(u, ndim_y, title=None, save=False, name='newname.jpg', return_fig=Fal
     if ndim_y == 3:
         plot_u_3d(u)
         return
+    
+    ndim_x = u.ndim - ndim_y
+
+    if ndim_x == 1:
+        newshape =  (1,) + u.shape
+        u = u.reshape(*newshape)
+    
+    if ndim_y == 1:
+        newshape =  u.shape + (1,)
+        u = u.reshape(*newshape)
 
     if vmax is None and normalize: vmax = np.max(u)
     if vmin is None and normalize: vmin = np.min(u)
-
+    
     M1, M2, N1, N2 = u.shape
 
     if border_width is None:
