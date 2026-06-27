@@ -92,7 +92,7 @@ def model_naif_graph(E, mask_rfft, shape_x, shape_y, alpha1, alpha2, C_bounds, g
     Z, parent_node, d = graph_DR_parameters
 
     from prox_and_proj import prox_norm21
-    from operators import II, IIstar, JJ, PP
+    from operators import II, IIstar, JJ, JJstar, PP
     from forward import KK_factory, KKstar_factory
     from differential_operators import nabla_x, nabla_y, div_x, div_y
     from solve_linear_systems import (laplacian_eigenvalues, resolvent_with_laplacian,
@@ -128,7 +128,7 @@ def model_naif_graph(E, mask_rfft, shape_x, shape_y, alpha1, alpha2, C_bounds, g
         Q = prox_F2(z['Q'], lam)
         f = z['f'].copy()
         f[ind] = 0
-        f = f.clip(max=C_f)
+        # f = f.clip(max=C_f)
         g = z['g'].clip(-alpha2, alpha2)
         return {'P': P, 'Q': Q, 'f': f, 'g': g, 'h':KK(z['P'])-E}
 
@@ -141,7 +141,7 @@ def model_naif_graph(E, mask_rfft, shape_x, shape_y, alpha1, alpha2, C_bounds, g
     eigenvalues_J3 = laplacian_eigenvalues(shape_xy, axes_y_for_shape_xy)
 
     def J_1(z, lam):
-        b = z['P'] + lam * JJ(div_x(z['f']), shape_x, shape_y)
+        b = z['P'] + lam * JJstar(div_x(z['f']), shape_x, shape_y)
         pointwise_division_J1 = 1 - lam ** 2 * eigenvalues_J1
         P = resolvent_with_JJ(b, PP, JJ, shape_x, shape_y, axes_x, pointwise_division_J1, sigma=None)
         Q = z['Q']
@@ -160,7 +160,8 @@ def model_naif_graph(E, mask_rfft, shape_x, shape_y, alpha1, alpha2, C_bounds, g
         return {'P': P, 'Q': Q, 'f': f, 'g': g, 'h':KK(z['P'])-E}
 
     def J_3(z, lam):
-        P = z['P'].clip(min=0, max=C_P)
+        # P = z['P'].clip(min=0, max=C_P)
+        P = z['P'].clip(min=0)
         b = z['f'] + lam * div_y(z['Q'])
         pointwise_division_J3 = 1 - lam ** 2 * eigenvalues_J3
         f = resolvent_with_laplacian(b, pointwise_division_J3, axes_y, sigma=None)
