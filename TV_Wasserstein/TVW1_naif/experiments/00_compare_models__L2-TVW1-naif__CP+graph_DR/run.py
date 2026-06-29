@@ -69,13 +69,13 @@ if __name__ == '__main__':
                                 f"alpha1={alpha1}, alpha2={alpha2}, it={iterations}")
 
 # %% ── model_naif (Chambolle-Pock) ────────────────────────────────────────────
-from l2_tvw1_naif import model_naif
+from l2_tvw1_naif import l2_tvw1_naif_CP
 
 if __name__ == '__main__':
     alpha1, alpha2 = 0.45, 1.4
     stepsize_ratio = 0.5
     iterations = 1000
 
-    Pstar = model_naif(E, mask_rfft, shape_x, shape_y, alpha1, alpha2, stepsize_ratio, iterations)
+    Pstar = l2_tvw1_naif_CP(E, mask_rfft, shape_x, shape_y, alpha1, alpha2, stepsize_ratio, iterations)
     plot_u(Pstar, ndim_y, title=f"naif (CP), retained={int(retained_ratio*100)}%, SNR={SNR}, "
                                 f"alpha1={alpha1}, alpha2={alpha2}, it={iterations}")
