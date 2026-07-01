@@ -17,12 +17,14 @@ from pathlib import Path
 _CURRENT = Path(__file__).resolve().parent      # the folder where paths_rodolfoassereto.py is located
 _ROOT = _CURRENT.parent                         # its parent folder
 
-_DIRS = [
-    _ROOT / "Libraries",   # Note: _ROOT is now a Path object, and the operator / is overloaded for this class to mean "join paths"
-    _CURRENT / "core",        # TVW1-specific shared operators / forward / metrics / graph_DR_auxiliary_functions
-    _CURRENT / "data",      # the variational models
-    _CURRENT / "TVW1_naif",        # test-data generators
-]
+_DIRS = [ _ROOT / "Libraries", _CURRENT]
+
+# _DIRS = [
+#     _ROOT / "Libraries",   # Note: _ROOT is now a Path object, and the operator / is overloaded for this class to mean "join paths"
+#     _CURRENT / "core",        # TVW1-specific shared operators / forward / metrics / graph_DR_auxiliary_functions
+#     _CURRENT / "data",      # the variational models
+#     _CURRENT / "TVW1_naif",        # test-data generators
+# ]
 
 # Add all folders in _DIRS
 for _d in _DIRS:
@@ -30,7 +32,7 @@ for _d in _DIRS:
     if _d.is_dir() and _s not in sys.path:
         sys.path.insert(0, _s)
 
-# Also add all subfolders
-for newpath in _CURRENT.rglob("*"): # rglob is a Path method that returns all subobject's paths (as a Path object, not as a string)
-    if newpath.is_dir() and str(newpath) not in sys.path:
-        sys.path.append(str(newpath))
+# # Also add all subfolders
+# for newpath in _CURRENT.rglob("*"): # rglob is a Path method that returns all subobject's paths (as a Path object, not as a string)
+#     if newpath.is_dir() and str(newpath) not in sys.path:
+#         sys.path.append(str(newpath))
