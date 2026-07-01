@@ -83,29 +83,26 @@ def TVW1(u, shape_x, shape_y, ground_metric=None, reg=None, iso=False):
 
     return total
 
-if __name__ == 'main':
+if __name__ == '__main__':
 
     sh_x, sh_y = (4,4), (9,9)
+    ndim_y = len(sh_y)
     tmp = np.zeros(sh_x + sh_y)
     tmp[:,:,1,1] = 1
     tmp[1,3,1,1] = 0
     tmp[1,3,1,2] = 1
 
     from plottings import plot_u
-    plot_u(tmp, sh_y)
+    plot_u(tmp, ndim_y)
 
     dist = TVW1(tmp, sh_x, sh_y)
 
     print(dist)
 
-if __name__ == 'main':
+    tmp2 = np.zeros(sh_x + sh_y)
+    tmp2[:,:,1,1] = 1
+    tmp2[:,:,3,3] = -1
+    tmp2[1,3,1,1] = 0
+    tmp2[1,3,1,2] = 1
 
-    sh_x, sh_y = (4,4), (9,9)
-    tmp = np.zeros(sh_x + sh_y)
-    tmp[:,:,1,1] = 1
-    tmp[:,:,3,3] = -1
-    tmp[1,3,1,1] = 0
-    tmp[1,3,1,2] = 1
-
-    from plottings import plot_u
-    plot_u(tmp, sh_y)
+    plot_u(tmp2, ndim_y)

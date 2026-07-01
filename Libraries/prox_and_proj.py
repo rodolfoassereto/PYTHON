@@ -1,6 +1,7 @@
 '''Here we define useful proximity operators and projections'''
 
 import numpy as np
+from scipy.linalg import cho_factor, cho_solve
 
 # %% Proximity operators
 
@@ -15,12 +16,15 @@ def prox_norm1_bis(x, lam=1): # accomplishes the same; same speed
     return (np.abs(x) - lam).clip(min=0) * np.sign(x)
 
 def prox_norm2(x, lam=1): # lam can be 0
-    if lam == 0: return x
+    if lam == 0:
+        return x
     return ( 1 - lam / np.maximum(np.linalg.norm(x), lam) ) * x
 
 def prox_norm21(x, lam, ax): # ax is the (only) axis along which the 2-norm is computed. Note: previously it defaulted to 1
-    if lam==0: return x
-    if lam==np.inf: return np.zeros(x.shape)
+    if lam==0:
+        return x
+    if lam==np.inf:
+        return np.zeros(x.shape)
     tup = list(x.shape)
     tup[ax] = 1
     return np.reshape(1 - lam / np.linalg.norm(x, axis=ax).clip(min=lam), tup ) * x
@@ -31,7 +35,6 @@ def prox_norminf(x, lam=1): # allows for x n-D; allows for lam=np.inf
 def prox_quadratic(A, b, x, lam):
     # prox_{lam * (1/2)||Ax-b||^2}(y) = argmin_x 0.5||x-y||^2 + lam*0.5||Ax-b||^2
     # => (I + lam A^T A) x = y + lam A^T b
-    from scipy.linalg import cho_factor, cho_solve
     A = np.asarray(A, float)
     b = np.asarray(b, float)
     At = A.T
@@ -89,55 +92,6 @@ def prox_square_over_linear(x, t, step, t0=0, t1=np.inf):
 
         return x_prox, t_prox
 
-
-def make_prox_quadratic(A, b):
-    A = np.asarray(A, float)
-    b = np.asarray(b, float)
-    At = A.T
-    Atb = At @ b
-    AtA = At @ A
-    I = np.eye(A.shape[1])
-
-    # prox_{lam * (1/2)||Ax-b||^2}(y) = argmin_x 0.5||x-y||^2 + lam*0.5||Ax-b||^2
-    # => (I + lam A^T A) x = y + lam A^T b
-    def prox(y_dict, lam):
-        y = y_dict["x"]
-        Mmat = I + lam * AtA
-        cfac = cho_factor(Mmat, lower=True, check_finite=False)
-        x = cho_solve(cfac, y + lam * Atb, check_finite=False)
-        return {"x": x}
-    return prox
-
-def make_prox_huber(lmbda, delta): # lmbda is the regularization parameter of the huber regularizer
-    lmbda = float(lmbda)
-    delta = float(delta)
-    # Huber_delta(t) = 0.5 t^2 if |t|<=delta else delta(|t|-0.5 delta)
-    # prox_{lam * lmbda * Huber}(y) elementwise:
-    # gamma = lam*lmbda
-    # if y > delta(1+gamma): y - gamma*delta
-    # if y < -delta(1+gamma): y + gamma*delta
-    # else: y/(1+gamma)
-    def prox(y_dict, lam):
-        y = y_dict["x"]
-        gamma = lam * lmbda
-        thresh = delta * (1.0 + gamma)
-        x = np.empty_like(y)
-        mask_hi = y > thresh
-        mask_lo = y < -thresh
-        mask_mid = ~(mask_hi | mask_lo)
-        x[mask_hi] = y[mask_hi] - gamma * delta
-        x[mask_lo] = y[mask_lo] + gamma * delta
-        x[mask_mid] = y[mask_mid] / (1.0 + gamma)
-        return {"x": x}
-    return prox
-
-def make_prox_box(l, u):
-    l = float(l); u = float(u)
-    def prox(y_dict, lam):  # lam unused
-        y = y_dict["x"]
-        return {"x": np.clip(y, l, u)}
-    return prox
-
 # %% Projections
 
 def proj_L_infty_ball(x, lam=1): # lam is the "radius" of the L infinity ball
@@ -172,7 +126,8 @@ def proj_simplex(x, lam=1):
         if tmax >= s[j+1]:
             bget = True
             break
-    if not(bget): tmax = (tmpsum + s[n-1] - lam)/n
+    if not(bget):
+        tmax = (tmpsum + s[n-1] - lam)/n
     return (y - tmax).clip(min=0).reshape(x.shape)
 
 ''' The following function is my generalization of proj_simplex(y)'''
@@ -183,7 +138,8 @@ def proj_simplex_array(A, dim): # projects the last dim axes of an N-dimensional
 
 def proj_simplex_2(x, lam=1): # proj of an array x to the lam-simplex (as if it was 1-D); slightly slower than the one from the arxiv paper
     # if lam <= 0: raise ValueError("must be positive")
-    if lam==np.inf: return np.zeros(x.shape)
+    if lam==np.inf:
+        return np.zeros(x.shape)
     x = np.asarray(x).flatten()
     u = np.sort(x)[::-1] # Sort v in descending order
     cssv = np.cumsum(u) # Compute the cumulative sum of u
