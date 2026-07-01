@@ -19,6 +19,7 @@ def central_Y_indices(shape_f, shape_x, shape_y): # returns the indices of the Y
     assert ndim_0 >= 0
     return (slice(None),)*(ndim_0+ndim_x) + tuple( np.array(shape_y) // 2 )
 
+
 def model_CP(E, mask_rfft, shape_x, shape_y, alpha1, alpha2, stepsize_ratio, iterations, printprogress=True):
 
     '''This should be renamed model_naif_CP and it does not solve the same problem as model_naif_graph actually (for example, no P>=0 constraint)'''
@@ -86,7 +87,7 @@ def model_graphDR(E, mask_rfft, shape_x, shape_y, alpha1, alpha2, C_bounds, grap
                      printprogress=True, extra_metrics_fn=None, record_every=1):
     """Same model, solved by graph Douglas-Rachford.
 
-    graph_DR_parameters = (Z, parent_node, d); build it with core/graph_DR_auxiliary_functions.py.
+    graph_DR_parameters = (Z, parent_node, d); build it with graph_DR_auxiliary_functions.py.
     """
     C_P, C_Q, C_f = C_bounds
     Z, parent_node, d = graph_DR_parameters
@@ -244,9 +245,10 @@ def primal_dual_gap(P, Q, f, g, h, E, KK, KKstar, C_bounds, alpha_1, alpha_2, sh
     d = dual(f, g, h, E, C_bounds, alpha_1, shape_x, shape_y, KKstar)
     return p + d
 
-def compute_C_bounds(shape_y, alpha_1, alpha_2, E):
+def compute_C_bounds(shape_x, shape_y, alpha_1, alpha_2, E):
     E_norm = np.linalg.norm(E)
-    C_P = 2 * E_norm         # bound on ||P*||_inf
+    N = np.prod(shape_x) * np.prod(shape_y)
+    C_P = 2 * E_norm / np.sqrt(N)        # bound on ||P*||_inf
     C_Q = E_norm ** 2 / (2 * alpha_1)           # bound on ||Q*||_{2,1}
     C_f = alpha_1 * np.floor( max(shape_y)+1 )/2 * (1 + np.sqrt(2) / 2)   # bound on ||f*||_inf
     return (C_P, C_Q, C_f)

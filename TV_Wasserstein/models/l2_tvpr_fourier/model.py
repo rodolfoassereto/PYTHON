@@ -1,11 +1,17 @@
 import numpy as np
 
+import sys
+from pathlib import Path
+parent_folder_with_condition = ( p for p in [Path.cwd(), *Path.cwd().parents] if (p / "paths_rodolfoassereto.py").is_file() )
+sys.path.insert( 0, str( next( parent_folder_with_condition ) ) )
+import paths_rodolfoassereto
+
 
 def L2_TVPR(b, alpha1, eps, beta1 = None, forward='UF', maxit=10000, printprogress=True):
     
     from prox_and_proj import prox_norm21, proj_L_infty_ball
     from differential_operators import nabla_x, nabla_y, div_x, div_y
-    from algorithms_general import CP
+    from proximal_algorithms import CP
     
     b = np.ma.masked_array(b) # ensures b is a masked array
     
@@ -176,7 +182,7 @@ def L2(b, maxit=4000, printprogress=True): # funziona!
     
     return X['u'].real
 
-def TVPR( u, alpha1, tau, beta1=None , maxit=2000, printprogress=False ):
+def TVPR( u, alpha1, tau, beta1=None , maxit=2000, printprogress=False ):# !! Wrong?
     '''
     
     Evaluate the TV-PR (Piccoli-Rossi) regularizer of a field u, via CP on its
@@ -189,7 +195,7 @@ def TVPR( u, alpha1, tau, beta1=None , maxit=2000, printprogress=False ):
     '''
     from prox_and_proj import prox_norm21, proj_L_infty_ball
     from differential_operators import nabla_x, nabla_y, div_x, div_y
-    from algorithms_general import CP
+    from proximal_algorithms.CP import CP
     
     dim_x = {3: 1, 4: 2, 5: 2}.get(u.ndim, None) # I am allowing 3-, 4- and 5-D data
     dim_y = u.ndim - dim_x

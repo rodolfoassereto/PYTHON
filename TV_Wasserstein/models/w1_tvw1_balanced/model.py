@@ -10,7 +10,7 @@ Callers must `import paths` first.
 import numpy as np
 
 
-def model_W1_TVW1(u_bar, shape_x, shape_y, alpha, iterations, printprogress=True, stepsize_ratio=0.2):
+def model_CP(u_bar, shape_x, shape_y, alpha, iterations, printprogress=True, stepsize_ratio=0.2):
     assert type(shape_x) is tuple and type(shape_y) is tuple
 
     from differential_operators import nabla_x, nabla_y, div_x, div_y
