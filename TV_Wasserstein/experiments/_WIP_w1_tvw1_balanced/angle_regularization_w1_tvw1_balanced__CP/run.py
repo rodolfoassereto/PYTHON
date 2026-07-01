@@ -94,7 +94,7 @@ for idx in np.ndindex(shape_ring_x):
     phi = np.pi * r * 0.4
     rotated_temp = rotate_2d_image( ring, phi )
     ring_4d[idx] = rotated_temp / np.sum(rotated_temp)
-plot_u(ring_4d, shape_ring_y)
+plot_u(ring_4d, ndim_ring_y)
 
 ring_4d_reg = model_W1_TVW1(ring_4d, shape_ring_x, shape_ring_y, 1, 3000)
 plot_u(ring_4d_reg, ndim_ring_y)
@@ -125,7 +125,7 @@ for idx in np.ndindex(shape_bar_x):
     phi = initial_phis[idx] + np.pi * r * 0.1
     rotated_temp = rotate_2d_image( bar, phi )
     bar_4d[idx] = rotated_temp / np.sum(rotated_temp)
-plot_u(bar_4d, shape_bar_y, title=f"Bars with noise on the angle")
+plot_u(bar_4d, ndim_bar_y, title=f"Bars with noise on the angle")
 
 bar_4d_reg = model_W1_TVW1(bar_4d, shape_bar_x, shape_bar_y, 1, 3000)
 plot_u(bar_4d_reg, ndim_bar_y, title=f"Bars denoised with W1-TVW1")

@@ -129,7 +129,7 @@ extra_metrics_fn = make_metrics_fn(ground_truth, ground_truth_norm, N, Z)
 # %% ── 6. Run experiments ──────────────────────────────────────────────────────
 from l2_tvw1_naif import compute_C_bounds, model_naif_graph
 
-C_bounds = compute_C_bounds(shape_y, alpha1, alpha2, E)
+C_bounds = compute_C_bounds(shape_x, shape_y, alpha1, alpha2, E)
 
 results = {}
 

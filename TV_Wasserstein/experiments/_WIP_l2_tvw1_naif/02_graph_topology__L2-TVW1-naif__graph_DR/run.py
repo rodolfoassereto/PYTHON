@@ -180,7 +180,7 @@ def make_metrics_fn(P_true, P_true_norm, N_op, Z):
 
 from l2_tvw1_naif import compute_C_bounds, model_naif_graph
 
-C_bounds = compute_C_bounds(shape_y, alpha1, alpha2, E)
+C_bounds = compute_C_bounds(shape_x, shape_y, alpha1, alpha2, E)
 
 results_repr = {}
 
