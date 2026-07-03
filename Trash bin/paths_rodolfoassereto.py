@@ -17,7 +17,10 @@ from pathlib import Path
 _CURRENT = Path(__file__).resolve().parent      # the folder where paths_rodolfoassereto.py is located
 _ROOT = _CURRENT.parent                         # its parent folder
 
-_DIRS = [ _ROOT / "Libraries", _CURRENT]
+_DIRS = [
+    _ROOT / "Libraries",
+    _CURRENT
+    ]
 
 # _DIRS = [
 #     _ROOT / "Libraries",   # Note: _ROOT is now a Path object, and the operator / is overloaded for this class to mean "join paths"
