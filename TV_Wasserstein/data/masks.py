@@ -3,7 +3,7 @@
 """
 import numpy as np
 from skimage.draw import line
-from gaussians import gaussian_density_factory, function_as_array
+from .gaussians import gaussian_density_factory, function_as_array
 
 
 # =====================================================================

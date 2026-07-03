@@ -1,18 +1,13 @@
 # %% ── bootstrap ──────────────────────────────────────────────────────────────
 
-import sys
-from pathlib import Path
-parent_folder_with_condition = ( p for p in [Path.cwd(), *Path.cwd().parents] if (p / "paths_rodolfoassereto.py").is_file() )
-sys.path.insert( 0, str( next( parent_folder_with_condition ) ) )
-import paths_rodolfoassereto
-
 import numpy as np
 import matplotlib.pyplot as plt
 
-from masks import undersampling_mask_xy
-from forward import KK_factory, KKstar_factory
-from proximal_algorithms.graph_DR_auxiliary_functions import make_graph_DR_parameters
-import l2_tvw1_naif
+from data.masks import undersampling_mask_xy
+from core.forward import KK_factory, KKstar_factory
+# Equivalent: from proximal_algorithms.graph_DR_auxiliary_functions import make_graph_DR_parameters 
+import proximal_algorithms.graph_DR_auxiliary_functions
+
 from plottings import plot_u
 
 
@@ -25,11 +20,11 @@ CONCENTRATION = 0.7
 ALPHA1, ALPHA2 = 0.02, 0.0002
 STEPSIZE_RATIO = 0.5    # CP
 SIGMA = 0.3             # (good value from the sigma sweep)
-ITER = 100         # iterations
+ITER = 10000         # iterations
 RECORD = max( 5, int(ITER / 400) )
 
 N = 4
-graph_params = make_graph_DR_parameters(N, [(0, 1), (1, 2), (2, 3)])
+graph_params = proximal_algorithms.graph_DR_auxiliary_functions.make_graph_DR_parameters(N, [(0, 1), (1, 2), (2, 3)])
 
 # %% ── build the toymodel  ─────────────────────────────────────────────
 
@@ -37,11 +32,11 @@ shape_x, shape_y = (6, 6), (22, 22)
 ndim_x, ndim_y = len(shape_x), len(shape_y)
 np.random.seed(SEED)
 
-# from gaussians import build_gaussian_mixture
+# from data.gaussians import build_gaussian_mixture
 # gt = SCALE * build_gaussian_mixture(shape_x, shape_y)
 # gt[gt < 1e-14] = 0
 
-from displacements import build_u_gammas
+from data.displacements import build_u_gammas
 P_dagger = build_u_gammas(shape_x[0], shape_y[0], angle=0.2)
 plot_u(P_dagger, 2)
 
@@ -72,13 +67,17 @@ print("--------------------------------------------------")
 
 # %% ── Test: objective function throughout graph-DR
 
+from models.l2_tvw1_naif_fourier.primal_dual_gap import compute_C_bounds
+from models.l2_tvw1_naif_fourier.model import model_graphDR, objective
+from models.l2_tvw1_naif_fourier.primal_dual_gap import primal_dual_gap
+
 print("\n[This script computes objective function and primal-dual gap]")
-C_bounds = l2_tvw1_naif.compute_C_bounds(shape_x, shape_y, ALPHA1, ALPHA2, E)
+C_bounds = compute_C_bounds(shape_x, shape_y, ALPHA1, ALPHA2, E)
 
 def objective_fn(x_list):
     n = len(x_list)
     P = sum(xi['P'] for xi in x_list) / n
-    return l2_tvw1_naif.objective(P, shape_x, shape_y, ALPHA1, ALPHA2, KK, E)
+    return objective(P, shape_x, shape_y, ALPHA1, ALPHA2, KK, E)
 
 def gap_fn(x_list):
     n = len(x_list)
@@ -87,7 +86,7 @@ def gap_fn(x_list):
     f = sum(xi['f'] for xi in x_list) / n
     g = sum(xi['g'] for xi in x_list) / n
     h = sum(xi['h'] for xi in x_list) / n
-    return l2_tvw1_naif.primal_dual_gap(P, Q, f, g, h, E, KK, KKstar, C_bounds, ALPHA1, ALPHA2, shape_x, shape_y)
+    return primal_dual_gap(P, Q, f, g, h, E, KK, KKstar, C_bounds, ALPHA1, ALPHA2, shape_x, shape_y)
 
 def extra_metrics_gap(x_list):
     return {'gap': gap_fn(x_list) }
@@ -96,7 +95,7 @@ def extra_metrics_fn(x_list):
     return {'objective': objective_fn(x_list), 'gap': gap_fn(x_list)}
 
 np.random.seed(SEED)
-x, _, history = l2_tvw1_naif.model_graphDR(E, mask_rfft, shape_x, shape_y, ALPHA1, ALPHA2, C_bounds,
+x, _, history = model_graphDR(E, mask_rfft, shape_x, shape_y, ALPHA1, ALPHA2, C_bounds,
                                             graph_params, SIGMA, ITER,
                                             printprogress=True,
                                             extra_metrics_fn=extra_metrics_gap, record_every=RECORD)
@@ -124,7 +123,7 @@ plt.show()
 
 from my_optimal_transport import TVW1
 from standard_TV_denoising import TVL1
-from operators import II, JJ
+from core.tvw1_naif.operators import II, JJ
 
 obj_1_dagger = 0.5 * np.sum(np.abs( KK(P_dagger) - E )**2)
 obj_2_dagger = TVW1(JJ(P_dagger, shape_x, shape_y), shape_x, shape_y)
