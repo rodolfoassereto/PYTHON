@@ -1,7 +1,6 @@
 import numpy as np
 import ot
 
-
 def TVW1(u, shape_x, shape_y, ground_metric=None, reg=None, iso=False):
     """
     Total Variation Wasserstein-1 seminorm.
@@ -82,6 +81,47 @@ def TVW1(u, shape_x, shape_y, ground_metric=None, reg=None, iso=False):
                 total += float(ot.sinkhorn2(pos, neg, M, reg)[0])
 
     return total
+
+def TVPR( u, alpha1, tau, beta1=None , maxit=2000, printprogress=False ):# !! Extremely slow to converge?
+    '''
+    
+    Evaluate the TV-PR (Piccoli-Rossi) regularizer of a field u, via CP on its
+    dual. Returns (s1, s2): s1 = ||xi||_{2,1} (the regularizer value, 2-norm
+    grouped along the displacement-gradient axis 0); s2 = <nabla_x(u/alpha1) +
+    div_y(xi), w>.
+    
+    '''
+    from prox_and_proj import prox_norm21, proj_L_infty_ball
+    from differential_operators import nabla_x, nabla_y, div_x, div_y
+    from proximal_algorithms.CP import CP
+    
+    dim_x = {3: 1, 4: 2, 5: 2}.get(u.ndim, None) # I am allowing 3-, 4- and 5-D data
+    dim_y = u.ndim - dim_x
+        
+    L_norm_sq = 4 * dim_y
+    sig = 1 / (tau * L_norm_sq)
+    # sig, tau = 2 * [1 / np.sqrt(L_norm_sq)] # this is to have sig = tau
+    if beta1 in {None}: beta1 = alpha1 * np.max(u.shape[dim_x+1:])
+    
+    prox_f     = lambda X, tau: { 'xi':  prox_norm21(X['xi'], lam=tau, ax=0) }
+    prox_gstar = lambda Y, sig: { 'w':   proj_L_infty_ball(Y['w'] + sig/alpha1 * nabla_x(u, dim=dim_x), lam=beta1) }
+    L     = lambda X: { 'w':   div_y(X['xi']) }
+    Lstar = lambda Y: { 'xi':  -nabla_y(Y['w'], dim=dim_y) }
+    
+    temp0 = u.copy()
+    X0 = { 'xi':  nabla_y( nabla_x(temp0, dim=dim_x), dim=dim_y) }
+    Y0 = { 'w':   nabla_x(temp0, dim=dim_x) }
+    
+    X, Y = CP(X0, Y0, tau, sig, prox_f, prox_gstar, L, Lstar, maxit, printprogress=printprogress)
+    
+    # if np.max(np.abs(Y['w'])) > beta1:
+    #     w_proj = proj_L_infty_ball(Y['w'], lam=beta1)
+    #     print('warning: w did not belong to the infinity ball')
+    
+    s1 = np.sum( np.linalg.norm( X['xi'], axis=0 ) )
+    s2 = np.dot( nabla_x( u/alpha1, dim=dim_x).flatten() + div_y(X['xi']).flatten() , Y['w'].flatten() )
+    
+    return s1, s2
 
 if __name__ == '__main__':
 
