@@ -6,3 +6,5 @@ CP g-update (model_CP, line 62): proj_L_infty_ball(u['g'] / alpha2) clips g to t
 dual() divides by alpha_1 (line 211): s = … / alpha_1 is NaN when alpha1=0; the whole phi_surrogate_conjugate term should be skipped in that case.
 J_0 no-op clip (line 125): f.clip(max=C_f) discards its return value, so the upper bound on f is never enforced by the solver (only by the gap's own re-clipping). Fix: f = f.clip(-C_f, C_f).
 One note worth flagging: in the source, the CP entry point is named model_CP (the docstring says it "should be renamed model_naif_CP" and notes it doesn't enforce P ≥ 0 the way model_naif_graph does). I documented it as model_CP to match the actual code — let me know if you'd rather the README use the intended model_naif_CP name instead.
+
+TVPR functions seems wrong
