@@ -20,7 +20,7 @@ CONCENTRATION = 0.7
 ALPHA1, ALPHA2 = 0.02, 0.0002
 STEPSIZE_RATIO = 0.5    # CP
 SIGMA = 0.3             # (good value from the sigma sweep)
-ITER = 10000         # iterations
+ITER = 50000         # iterations
 RECORD = max( 5, int(ITER / 400) )
 
 N = 4
@@ -85,8 +85,7 @@ def gap_fn(x_list):
     Q = sum(xi['Q'] for xi in x_list) / n
     f = sum(xi['f'] for xi in x_list) / n
     g = sum(xi['g'] for xi in x_list) / n
-    h = sum(xi['h'] for xi in x_list) / n
-    return primal_dual_gap(P, Q, f, g, h, E, KK, KKstar, C_bounds, ALPHA1, ALPHA2, shape_x, shape_y)
+    return primal_dual_gap(P, Q, f, g, E, KK, KKstar, C_bounds, ALPHA1, ALPHA2, shape_x, shape_y)
 
 def extra_metrics_gap(x_list):
     return {'gap': gap_fn(x_list) }
@@ -144,9 +143,9 @@ obj_3 = TVL1( II(P_graph, shape_x, shape_y))
 
 # print("--------------------------------------------------")
 
-# print("gaps all finite:", np.all(np.isfinite(gaps)))
-# print(f"Initial gap: {gaps[0]:.3g}")
-# print(f"Final gap: {gaps[-1]:.3g}")
+print("gaps all finite:", np.all(np.isfinite(gaps)))
+print(f"Initial gap: {gaps[0]:.3g}")
+print(f"Final gap: {gaps[-1]:.3g}")
 
 print("--------------------------------------------------")
 

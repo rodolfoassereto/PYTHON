@@ -117,6 +117,8 @@ def model_graphDR(E, mask_rfft, shape_x, shape_y, alpha1, alpha2, C_bounds, grap
 
     ind = central_Y_indices(f0.shape, shape_x, shape_y)
 
+    # note: no 'h' entry in the iterates -- the fidelity dual is not a variable of this splitting;
+    # primal_dual_gap() reconstructs it as K(P)-E when evaluating the gap.
     def J_0(z, lam):
         P = prox_F1(z['P'], lam)
         Q = prox_F2(z['Q'], lam)
@@ -124,7 +126,7 @@ def model_graphDR(E, mask_rfft, shape_x, shape_y, alpha1, alpha2, C_bounds, grap
         f[ind] = 0
         # f = f.clip(max=C_f)
         g = z['g'].clip(-alpha2, alpha2)
-        return {'P': P, 'Q': Q, 'f': f, 'g': g, 'h':KK(z['P'])-E}
+        return {'P': P, 'Q': Q, 'f': f, 'g': g}
 
     axes_x = tuple(i for i in range(ndim_x))
     axes_y = tuple(1 + ndim_x + i for i in range(ndim_y))  # z['f'] is a gradient (extra leading axis)
@@ -141,7 +143,7 @@ def model_graphDR(E, mask_rfft, shape_x, shape_y, alpha1, alpha2, C_bounds, grap
         Q = z['Q']
         f = z['f'] + lam * nabla_x(JJ(P, shape_x, shape_y), dim=ndim_x)
         g = z['g']
-        return {'P': P, 'Q': Q, 'f': f, 'g': g, 'h':KK(z['P'])-E}
+        return {'P': P, 'Q': Q, 'f': f, 'g': g}
 
     def J_2(z, lam):
         b = z['P'] + lam * IIstar(div_x(z['g']), shape_y)
@@ -151,7 +153,7 @@ def model_graphDR(E, mask_rfft, shape_x, shape_y, alpha1, alpha2, C_bounds, grap
         Q = z['Q']
         f = z['f']
         g = z['g'] + lam * nabla_x(II(P, shape_x, shape_y), dim=ndim_x)
-        return {'P': P, 'Q': Q, 'f': f, 'g': g, 'h':KK(z['P'])-E}
+        return {'P': P, 'Q': Q, 'f': f, 'g': g}
 
     def J_3(z, lam):
         # P = z['P'].clip(min=0, max=C_P)
@@ -161,12 +163,12 @@ def model_graphDR(E, mask_rfft, shape_x, shape_y, alpha1, alpha2, C_bounds, grap
         f = resolvent_with_laplacian(b, pointwise_division_J3, axes_y, sigma=None)
         Q = z['Q'] + lam * nabla_y(f, dim=ndim_y)
         g = z['g']
-        return {'P': P.clip(min=0), 'Q': Q, 'f': f, 'g': g, 'h':KK(z['P'])-E}
+        return {'P': P, 'Q': Q, 'f': f, 'g': g}  # P was already clipped above
 
     resolvents = [J_0, J_1, J_2, J_3]
     N = len(resolvents)
 
-    w0 = [{'P': np.zeros(shape_xy), 'Q': np.zeros(shape_Q), 'f': np.zeros(shape_f), 'g': np.zeros(shape_g), 'h':E} for _ in range(N - 1)]
+    w0 = [{'P': np.zeros(shape_xy), 'Q': np.zeros(shape_Q), 'f': np.zeros(shape_f), 'g': np.zeros(shape_g)} for _ in range(N - 1)]
 
     result = graph_DR(sigma, Z, parent_node, d, w0, iterations, resolvents, printprogress=printprogress,
                       extra_metrics_fn=extra_metrics_fn, record_every=record_every)
