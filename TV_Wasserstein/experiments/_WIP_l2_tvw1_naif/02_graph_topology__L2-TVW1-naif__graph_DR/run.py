@@ -44,14 +44,10 @@ ndim_xy = len(shape_xy)
 retained_ratio = 0.15
 mask_fft = undersampling_mask_xy(shape_x, shape_y, retained_ratio, concentration_coeff=0.7)
 mask_fft = np.fft.ifftshift(mask_fft)
-mask_rfft = mask_fft[tuple(
-    slice(None) if i != ndim_xy-1 else slice(0, shape_xy[-1]//2+1)
-    for i in range(ndim_xy)
-)]
 
 from forward import KK_factory, KKstar_factory
-KK = KK_factory(mask_rfft)
-KKstar = KKstar_factory(mask_rfft)
+KK = KK_factory(mask_fft)
+KKstar = KKstar_factory(mask_fft)
 
 E_clean = KK(ground_truth)
 SNR = 20
@@ -198,7 +194,7 @@ for lam1, bg in representatives.items():
     np.random.seed(123)
     t0 = time.time()
     x, w, history = model_naif_graph(
-        E, mask_rfft, shape_x, shape_y, alpha1, alpha2,
+        E, mask_fft, shape_x, shape_y, alpha1, alpha2,
         C_bounds, graph_DR_parameters, sigma, iterations,
         printprogress=True,
         extra_metrics_fn=extra_metrics_fn, record_every=record_every,
@@ -238,7 +234,7 @@ if RUN_ALL:
         np.random.seed(123)
         t0 = time.time()
         x, w, history = model_naif_graph(
-            E, mask_rfft, shape_x, shape_y, alpha1, alpha2,
+            E, mask_fft, shape_x, shape_y, alpha1, alpha2,
             C_bounds, graph_DR_parameters, sigma, iterations,
             printprogress=False,
             extra_metrics_fn=extra_metrics_fn, record_every=record_every,

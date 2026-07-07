@@ -2,7 +2,7 @@
 """Correctness tests for models/l2_tvw1_naif.py  (CP and graph-DR implementations).
 
 Uses the project toymodel (gaussians.build_gaussian_mixture) undersampled by the
-canonical q-space mask (masks.undersampling_mask_xy) through the rfft forward
+canonical q-space mask (masks.undersampling_mask_xy) through the full-fft forward
 operator (forward.KK_*), exactly as the diffusion experiments do.
 
 What is checked
@@ -85,8 +85,7 @@ gt[gt < 1e-14] = 0
 ndim_xy = len(shape_x + shape_y)
 shape_xy = shape_x + shape_y
 mask_fft = np.fft.ifftshift(undersampling_mask_xy(shape_x, shape_y, RETAINED, CONCENTRATION))
-mask_rfft = mask_fft[ ..., : (shape_xy[-1]//2 + 1) ]
-KK, KKstar = KK_factory(mask_rfft), KKstar_factory(mask_rfft)
+KK, KKstar = KK_factory(mask_fft), KKstar_factory(mask_fft)
 
 E_clean = KK(gt)
 # Proper complex Gaussian noise: real and imaginary parts each ~ N(0, std^2/2),
@@ -109,7 +108,7 @@ print(f"  rough (zero-filled adjoint) rel. L2 error = {rough_err:.4f}")
 # %% ── Test 1: model_naif (Chambolle-Pock) ────────────────────────────────────
 print("\n[model_naif / CP]")
 np.random.seed(SEED)
-P_cp = models.l2_tvw1_naif_fourier.model.model_CP(E, mask_rfft, shape_x, shape_y, ALPHA1, ALPHA2, STEPSIZE_RATIO, IT_CP, printprogress=False)
+P_cp = models.l2_tvw1_naif_fourier.model.model_CP(E, mask_fft, shape_x, shape_y, ALPHA1, ALPHA2, STEPSIZE_RATIO, IT_CP, printprogress=False)
 plot_u(P_cp, ndim_y, title='CP')
 cp_err = rel_err(P_cp, gt)
 
@@ -119,7 +118,7 @@ check("naif: beats rough adjoint", cp_err < QUALITY_FACTOR * rough_err, f"{cp_er
 
 # convergence: Cauchy residual between T and 2T iterations should be small
 np.random.seed(SEED)
-P_cp_2T = models.l2_tvw1_naif_fourier.model.model_CP(E, mask_rfft, shape_x, shape_y, ALPHA1, ALPHA2, STEPSIZE_RATIO, 2 * IT_CP, printprogress=False)
+P_cp_2T = models.l2_tvw1_naif_fourier.model.model_CP(E, mask_fft, shape_x, shape_y, ALPHA1, ALPHA2, STEPSIZE_RATIO, 2 * IT_CP, printprogress=False)
 cauchy = rel_err(P_cp_2T, P_cp)  # ||P(2T)-P(T)|| / ||P(T)||
 check("naif: Cauchy residual small", cauchy < CAUCHY_TOL, f"||P(2T)-P(T)||/||P(T)|| = {cauchy:.4f} < {CAUCHY_TOL}")
 
@@ -142,7 +141,7 @@ def metrics_fn(x_list):
 C_bounds = models.l2_tvw1_naif_fourier.primal_dual_gap.compute_C_bounds(shape_x, shape_y, ALPHA1, ALPHA2, E)
 
 np.random.seed(SEED)
-x, w, hist = models.l2_tvw1_naif_fourier.model.model_graphDR(E, mask_rfft, shape_x, shape_y, ALPHA1, ALPHA2, C_bounds,
+x, w, hist = models.l2_tvw1_naif_fourier.model.model_graphDR(E, mask_fft, shape_x, shape_y, ALPHA1, ALPHA2, C_bounds,
                               graph_params, SIGMA, IT_GRAPH,
                               printprogress=False,
                               extra_metrics_fn=metrics_fn, record_every=10)
@@ -173,16 +172,16 @@ check("CP and graph_DR comparable quality", quality_gap < QUALITY_AGREE_TOL,
 # %% ── Test 4: determinism (same seed -> identical output), cheap low-iter ────
 print("\n[determinism]")
 np.random.seed(SEED)
-A = models.l2_tvw1_naif_fourier.model.model_CP(E, mask_rfft, shape_x, shape_y, ALPHA1, ALPHA2, STEPSIZE_RATIO, IT_DET, printprogress=False)
+A = models.l2_tvw1_naif_fourier.model.model_CP(E, mask_fft, shape_x, shape_y, ALPHA1, ALPHA2, STEPSIZE_RATIO, IT_DET, printprogress=False)
 np.random.seed(SEED)
-B = models.l2_tvw1_naif_fourier.model.model_CP(E, mask_rfft, shape_x, shape_y, ALPHA1, ALPHA2, STEPSIZE_RATIO, IT_DET, printprogress=False)
+B = models.l2_tvw1_naif_fourier.model.model_CP(E, mask_fft, shape_x, shape_y, ALPHA1, ALPHA2, STEPSIZE_RATIO, IT_DET, printprogress=False)
 check("naif deterministic", np.array_equal(A, B), f"max_abs_diff={np.max(np.abs(A - B)):.2e}")
 
 np.random.seed(SEED)
-xa, _, _ = models.l2_tvw1_naif_fourier.model.model_graphDR(E, mask_rfft, shape_x, shape_y, ALPHA1, ALPHA2, C_bounds, graph_params, SIGMA, IT_DET,
+xa, _, _ = models.l2_tvw1_naif_fourier.model.model_graphDR(E, mask_fft, shape_x, shape_y, ALPHA1, ALPHA2, C_bounds, graph_params, SIGMA, IT_DET,
                             printprogress=False)
 np.random.seed(SEED)
-xb, _, _ = models.l2_tvw1_naif_fourier.model.model_graphDR(E, mask_rfft, shape_x, shape_y, ALPHA1, ALPHA2, C_bounds, graph_params, SIGMA, IT_DET,
+xb, _, _ = models.l2_tvw1_naif_fourier.model.model_graphDR(E, mask_fft, shape_x, shape_y, ALPHA1, ALPHA2, C_bounds, graph_params, SIGMA, IT_DET,
                             printprogress=False)
 Pa = sum(xi['P'] for xi in xa) / N
 Pb = sum(xi['P'] for xi in xb) / N

@@ -37,10 +37,8 @@ ndim_xy = len(shape_xy)
 
 retained_ratio = 0.15
 mask_fft = np.fft.ifftshift(undersampling_mask_xy(shape_x, shape_y, retained_ratio, concentration_coeff=0.7))
-mask_rfft = mask_fft[tuple(slice(None) if i != ndim_xy - 1 else slice(0, shape_xy[-1] // 2 + 1)
-                          for i in range(ndim_xy))]
 
-KK, KKstar = KK_factory(mask_rfft), KKstar_factory(mask_rfft)
+KK, KKstar = KK_factory(mask_fft), KKstar_factory(mask_fft)
 
 E_clean = KK(gaussian_mixture)
 SNR = 20
@@ -62,7 +60,7 @@ if __name__ == '__main__':
     N = 4
     graph_DR_parameters = make_graph_DR_parameters(N, [(0, 1), (1, 2), (2, 3)])
 
-    x, w, _ = model_naif_graph(E, mask_rfft, shape_x, shape_y, alpha1, alpha2,
+    x, w, _ = model_naif_graph(E, mask_fft, shape_x, shape_y, alpha1, alpha2,
                                graph_DR_parameters, sigma, iterations)
     Pstar = sum(xi['P'] for xi in x) / N
     plot_u(Pstar, ndim_y, title=f"naif_graph, retained={int(retained_ratio*100)}%, SNR={SNR}, "
@@ -76,6 +74,6 @@ if __name__ == '__main__':
     stepsize_ratio = 0.5
     iterations = 1000
 
-    Pstar = l2_tvw1_naif_CP(E, mask_rfft, shape_x, shape_y, alpha1, alpha2, stepsize_ratio, iterations)
+    Pstar = l2_tvw1_naif_CP(E, mask_fft, shape_x, shape_y, alpha1, alpha2, stepsize_ratio, iterations)
     plot_u(Pstar, ndim_y, title=f"naif (CP), retained={int(retained_ratio*100)}%, SNR={SNR}, "
                                 f"alpha1={alpha1}, alpha2={alpha2}, it={iterations}")
