@@ -23,7 +23,7 @@ from prox_and_proj import prox_norm21
 from numpy.random import rand as rd
 
 
-def model_CP(E, mask_rfft, shape_x, shape_y, alpha1, alpha2, stepsize_ratio, iterations, printprogress=True):
+def model_CP(E, mask_fft, shape_x, shape_y, alpha1, alpha2, stepsize_ratio, iterations, printprogress=True):
 
     '''This should be renamed model_naif_CP and it does not solve the same problem as model_naif_graph actually (for example, no P>=0 constraint)'''
 
@@ -41,13 +41,13 @@ def model_CP(E, mask_rfft, shape_x, shape_y, alpha1, alpha2, stepsize_ratio, ite
     shape_l = E.shape
     l0 = rd(*shape_l) + 1j * rd(*shape_l)
 
-    assert np.fft.rfftn(P0).shape == mask_rfft.shape and np.sum(mask_rfft) == E.size
+    assert P0.shape == mask_fft.shape and np.sum(mask_fft) == E.size
 
     x0 = {'P': P0, 'Q': Q0}
     u0 = {'f': f0, 'g': g0, 'l': l0}
 
-    KK = KK_factory(mask_rfft)
-    KKstar = KKstar_factory(mask_rfft)
+    KK = KK_factory(mask_fft)
+    KKstar = KKstar_factory(mask_fft)
 
     def prox_f(x, tau):
         return {'P': x['P'].clip(min=0),
@@ -81,7 +81,7 @@ def model_CP(E, mask_rfft, shape_x, shape_y, alpha1, alpha2, stepsize_ratio, ite
     return x['P']
 
 
-def model_graphDR(E, mask_rfft, shape_x, shape_y, alpha1, alpha2, C_bounds, graph_DR_parameters, sigma, iterations,
+def model_graphDR(E, mask_fft, shape_x, shape_y, alpha1, alpha2, C_bounds, graph_DR_parameters, sigma, iterations,
                      printprogress=True, extra_metrics_fn=None, record_every=1):
     """Same model, solved by graph Douglas-Rachford.
 
@@ -103,14 +103,14 @@ def model_graphDR(E, mask_rfft, shape_x, shape_y, alpha1, alpha2, C_bounds, grap
     shape_Q = nabla_y(f0, dim=ndim_y).shape
     shape_g = nabla_x(II(P0, shape_x, shape_y), dim=ndim_x).shape
 
-    assert np.fft.rfftn(P0).shape == mask_rfft.shape and np.sum(mask_rfft) == E.size
+    assert P0.shape == mask_fft.shape and np.sum(mask_fft) == E.size
 
-    KK, KKstar = KK_factory(mask_rfft), KKstar_factory(mask_rfft)
+    KK, KKstar = KK_factory(mask_fft), KKstar_factory(mask_fft)
 
     def prox_F1(P, lam):
-        b = np.fft.rfftn(P + lam * KKstar(E), norm='ortho')
-        solution_linear_system = resolvent_with_undersampling_withmask(b, lam, mask_rfft)
-        return np.fft.irfftn(solution_linear_system, norm='ortho')
+        b = np.fft.fftn(P + lam * KKstar(E), norm='ortho')
+        solution_linear_system = resolvent_with_undersampling_withmask(b, lam, mask_fft)
+        return np.fft.ifftn(solution_linear_system, norm='ortho').real
 
     def prox_F2(Q, lam):
         return prox_norm21(Q, lam * alpha1, 0)
@@ -181,7 +181,7 @@ def model_graphDR(E, mask_rfft, shape_x, shape_y, alpha1, alpha2, C_bounds, grap
     return x, w, history
 
 def objective(P, shape_x, shape_y, alpha_1, alpha_2, KK, E):
-    from core.tvw1_naif import JJ, II
+    from core.tvw1_naif.operators import JJ, II
     from my_optimal_transport import TVW1
     from standard_TV_denoising import TVL1
     return 0.5 * np.sum(np.abs( KK(P) - E )**2) + alpha_1 * TVW1(JJ(P, shape_x, shape_y), shape_x, shape_y) + alpha_2 * TVL1( II(P, shape_x, shape_y))

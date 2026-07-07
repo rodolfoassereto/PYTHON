@@ -1,6 +1,27 @@
 import numpy as np
 from numpy.random import rand as rd
 
+# %% This cell tests the "resolvent_with_undersampling_withmask" function
+
+from solve_linear_systems import resolvent_with_undersampling_withmask
+from data.masks import undersampling_mask_xy
+
+shape_x, shape_y = (3,4), (3,5)
+shape_xy = shape_x + shape_y
+
+b = np.random.rand(*shape_xy)
+
+sig = 0.3
+
+mask = undersampling_mask_xy(shape_x, shape_y, 0.6, 0.5)
+mask_not = np.logical_not(mask)
+
+z = resolvent_with_undersampling_withmask(b, sig, mask)
+z_masked = z.copy()
+z_masked[mask_not] = 0
+
+print( f"Check resolvent_with_undersampling_mask: { np.allclose( z + sig*z_masked , b ) }" )
+
 # %% This cell tests the structure of the system (id - ∆ )x = b  (with a sparse laplacian)
 
 import scipy.sparse as sp
@@ -58,7 +79,7 @@ print( 'Check resolvent_with_laplacian: ', np.allclose( u - 0.3*laplacian_x(u, 2
 
 # %% This cell tests the "resolvent_with_II" function
 
-from L2_TVW1_naif__model import II, IIstar, JJ
+from core.tvw1_naif.operators import II, IIstar, JJ
 from solve_linear_systems import resolvent_with_II
 
 shape_x, shape_y = (3,4), (3,5)
@@ -71,14 +92,14 @@ sig = 0.3
 
 eigenvalues = laplacian_eigenvalues(shape_x, (0,1))
 pointwise_division = 1 - sig*size_y*eigenvalues
-z = resolvent_with_II(b, II, JJ, shape_x, shape_y, pointwise_division, sigma=None)
+z = resolvent_with_II(b, II, JJ, shape_x, shape_y, pointwise_division, sigma_times_size_y=None)
 
 IIz = II(z, shape_x, shape_y)
 print( 'Check resolvent_with_II: ', np.allclose( z - sig*IIstar( laplacian_x(IIz, 2), shape_y), b ) )
 
 # %% This cell tests the "resolvent_with_JJ" function
 
-from L2_TVW1_naif__model import PP, JJ, JJstar
+from core.tvw1_naif.operators import PP, JJ, JJstar
 from solve_linear_systems import resolvent_with_JJ
 from differential_operators import laplacian_x
 
